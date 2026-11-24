@@ -1,0 +1,3063 @@
+{
+ "about": "A part's parameters: one kind per part and the fields of that kind, in the units below with no prefix (100nF is 1e-07). `cloud-parts find` searches these. A field the datasheet does not state is left out, and the table says so in its `null_reason`.",
+ "types": {
+  "num": "a number in the field's unit",
+  "int": "a whole number",
+  "range": "[min, max] in the field's unit; null for an end the datasheet does not state. A single maximum (an LDO's 'Voltage - Supply: 15V') is [null, 15]",
+  "cond": "a list of {\"value\": number, <condition>: number}: the value at a stated test condition, one entry per condition the datasheet gives (rds_on at vgs 10 and at 4.5). A value the datasheet gives with no condition has the condition null",
+  "enum": "one of the listed words",
+  "enums": "a list of the listed words",
+  "bool": "true or false",
+  "text": "free text, short"
+ },
+ "common": {
+  "kind": {
+   "type": "enum",
+   "desc": "what the part is; one of `kinds`"
+  },
+  "mount": {
+   "type": "enum",
+   "values": [
+    "smd",
+    "tht",
+    "other"
+   ],
+   "desc": "how it lands on the board"
+  },
+  "temp": {
+   "type": "range",
+   "unit": "°C",
+   "desc": "operating (or junction, when that is all that is given) temperature"
+  },
+  "channels": {
+   "type": "int",
+   "desc": "independent units in the package: amps in a dual op amp, FETs in a dual FET, lines on a TVS array"
+  },
+  "automotive": {
+   "type": "bool",
+   "desc": "AEC-Q qualified"
+  }
+ },
+ "kinds": {
+  "resistor": {
+   "desc": "fixed resistor, chip or leaded, including current-sense shunts and resistor arrays (channels = elements)",
+   "fields": {
+    "resistance": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "tolerance": {
+     "type": "num",
+     "unit": "%",
+     "desc": "±, as a positive number: ±1% is 1"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W"
+    },
+    "voltage_max": {
+     "type": "num",
+     "unit": "V",
+     "desc": "working voltage limit (JLC 'Voltage-Supply(Max)')"
+    },
+    "tempco": {
+     "type": "num",
+     "unit": "ppm/°C",
+     "desc": "±, as a positive number"
+    },
+    "technology": {
+     "type": "enum",
+     "values": [
+      "thick_film",
+      "thin_film",
+      "metal_film",
+      "carbon_film",
+      "metal_oxide",
+      "wirewound",
+      "metal_strip",
+      "metal_alloy"
+     ]
+    }
+   },
+   "aliases": {
+    "r": "resistance",
+    "res": "resistance",
+    "tol": "tolerance",
+    "voltage": "voltage_max",
+    "v": "voltage_max",
+    "shunt": "resistance"
+   }
+  },
+  "potentiometer": {
+   "desc": "variable resistor: panel pot, trimmer, slide pot",
+   "fields": {
+    "resistance": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "tolerance": {
+     "type": "num",
+     "unit": "%"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W"
+    },
+    "taper": {
+     "type": "enum",
+     "values": [
+      "linear",
+      "log",
+      "reverse_log"
+     ]
+    },
+    "style": {
+     "type": "enum",
+     "values": [
+      "panel",
+      "trimmer",
+      "slide"
+     ]
+    },
+    "turns": {
+     "type": "num",
+     "desc": "1 for a single-turn pot"
+    },
+    "detents": {
+     "type": "int"
+    },
+    "switch": {
+     "type": "bool",
+     "desc": "carries a switch"
+    },
+    "voltage_max": {
+     "type": "num",
+     "unit": "V"
+    },
+    "tempco": {
+     "type": "num",
+     "unit": "ppm/°C"
+    },
+    "orientation": {
+     "type": "enum",
+     "values": [
+      "vertical",
+      "horizontal"
+     ]
+    },
+    "shaft_length": {
+     "type": "num",
+     "unit": "mm",
+     "desc": "from the mounting face; slide pots: travel"
+    },
+    "gangs": {
+     "type": "int"
+    }
+   },
+   "aliases": {
+    "r": "resistance",
+    "res": "resistance",
+    "pot": "resistance"
+   }
+  },
+  "capacitor": {
+   "desc": "fixed capacitor of any dielectric",
+   "fields": {
+    "capacitance": {
+     "type": "num",
+     "unit": "F"
+    },
+    "voltage": {
+     "type": "num",
+     "unit": "V",
+     "desc": "rated voltage"
+    },
+    "tolerance": {
+     "type": "num",
+     "unit": "%"
+    },
+    "dielectric": {
+     "type": "enum",
+     "values": [
+      "C0G",
+      "X5R",
+      "X6S",
+      "X7R",
+      "X7S",
+      "X7T",
+      "X8R",
+      "Y5V",
+      "Z5U",
+      "aluminum",
+      "polymer",
+      "tantalum",
+      "film",
+      "tantalum_polymer",
+      "hybrid",
+      "other"
+     ],
+     "desc": "the ceramic class (C0G is also NP0), or the technology for anything not ceramic"
+    },
+    "esr": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "ripple_current": {
+     "type": "num",
+     "unit": "A"
+    },
+    "lifetime": {
+     "type": "num",
+     "unit": "h",
+     "desc": "rated hours at the top of its temperature range (electrolytics)"
+    },
+    "tolerance_abs": {
+     "type": "num",
+     "unit": "F",
+     "desc": "± in farads, for small C0G parts rated ±0.25pF"
+    },
+    "ripple_frequency": {
+     "type": "num",
+     "unit": "Hz",
+     "desc": "the frequency ripple_current and esr are given at",
+     "condition_of": "ripple_current"
+    }
+   },
+   "aliases": {
+    "c": "capacitance",
+    "cap": "capacitance",
+    "v": "voltage",
+    "tol": "tolerance",
+    "tempco": "dielectric"
+   }
+  },
+  "inductor": {
+   "desc": "inductor or coil: power, RF, coupled",
+   "fields": {
+    "inductance": {
+     "type": "num",
+     "unit": "H"
+    },
+    "tolerance": {
+     "type": "num",
+     "unit": "%"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "rated (thermal) current"
+    },
+    "isat": {
+     "type": "num",
+     "unit": "A",
+     "desc": "saturation current"
+    },
+    "dcr": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "srf": {
+     "type": "num",
+     "unit": "Hz",
+     "desc": "self-resonant frequency"
+    },
+    "shielded": {
+     "type": "bool"
+    },
+    "q": {
+     "type": "cond",
+     "unit": "",
+     "at": "freq",
+     "at_unit": "Hz",
+     "desc": "quality factor at a test frequency; one entry per frequency the datasheet gives (JLC: 'Q @ Frequency')"
+    },
+    "tolerance_abs": {
+     "type": "num",
+     "unit": "H",
+     "desc": "± in henries, for small RF inductors rated ±0.3nH rather than in %"
+    }
+   },
+   "aliases": {
+    "l": "inductance",
+    "ind": "inductance",
+    "i": "current"
+   }
+  },
+  "ferrite_bead": {
+   "desc": "ferrite bead",
+   "fields": {
+    "impedance": {
+     "type": "num",
+     "unit": "Ω",
+     "desc": "at 100 MHz"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A"
+    },
+    "dcr": {
+     "type": "num",
+     "unit": "Ω"
+    }
+   },
+   "aliases": {
+    "z": "impedance",
+    "i": "current"
+   }
+  },
+  "common_mode_choke": {
+   "desc": "common-mode choke or filter",
+   "fields": {
+    "impedance": {
+     "type": "num",
+     "unit": "Ω",
+     "desc": "common-mode, at 100 MHz unless the datasheet gives only another"
+    },
+    "inductance": {
+     "type": "num",
+     "unit": "H"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A"
+    },
+    "dcr": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "voltage": {
+     "type": "num",
+     "unit": "V"
+    }
+   },
+   "aliases": {
+    "z": "impedance"
+   }
+  },
+  "transformer": {
+   "desc": "transformer: RF, signal, current-sense, gate-drive or power (not a common-mode choke)",
+   "fields": {
+    "function": {
+     "type": "enum",
+     "values": [
+      "rf",
+      "signal",
+      "current_sense",
+      "gate_drive",
+      "power"
+     ]
+    },
+    "turns_ratio": {
+     "type": "num",
+     "desc": "secondary turns per primary turn, as the datasheet states it (1:200 is 200)"
+    },
+    "impedance_ratio": {
+     "type": "num",
+     "desc": "secondary to primary impedance, as the datasheet states it (RF transformers)"
+    },
+    "freq": {
+     "type": "range",
+     "unit": "Hz",
+     "desc": "the frequency range the datasheet specifies"
+    },
+    "impedance": {
+     "type": "num",
+     "unit": "Ω",
+     "desc": "the system impedance an RF transformer is specified in (50, 75)"
+    },
+    "inductance": {
+     "type": "num",
+     "unit": "H",
+     "desc": "primary (magnetizing) inductance"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "rated primary current"
+    },
+    "isolation": {
+     "type": "num",
+     "unit": "V",
+     "desc": "Vrms, primary to secondary"
+    }
+   },
+   "aliases": {
+    "ratio": "turns_ratio",
+    "n": "turns_ratio",
+    "frequency": "freq",
+    "z": "impedance",
+    "l": "inductance",
+    "i": "current"
+   }
+  },
+  "crystal": {
+   "desc": "quartz crystal, resonator or crystal oscillator",
+   "fields": {
+    "frequency": {
+     "type": "num",
+     "unit": "Hz"
+    },
+    "tolerance": {
+     "type": "num",
+     "unit": "ppm",
+     "desc": "frequency tolerance at 25 °C, ±"
+    },
+    "stability": {
+     "type": "num",
+     "unit": "ppm",
+     "desc": "over temperature, ±"
+    },
+    "load_capacitance": {
+     "type": "num",
+     "unit": "F"
+    },
+    "esr": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "oscillator": {
+     "type": "bool",
+     "desc": "an active oscillator, not a bare crystal"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V",
+     "desc": "oscillators only"
+    }
+   },
+   "aliases": {
+    "f": "frequency",
+    "freq": "frequency",
+    "cl": "load_capacitance"
+   }
+  },
+  "fuse": {
+   "desc": "fuse, one-time or resettable (PTC)",
+   "fields": {
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "rated (hold, for a PTC) current"
+    },
+    "trip_current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "PTC trip current"
+    },
+    "voltage": {
+     "type": "num",
+     "unit": "V",
+     "desc": "rated voltage"
+    },
+    "resettable": {
+     "type": "bool"
+    },
+    "speed": {
+     "type": "enum",
+     "values": [
+      "fast",
+      "slow",
+      "medium"
+     ]
+    },
+    "breaking_capacity": {
+     "type": "num",
+     "unit": "A"
+    },
+    "i2t": {
+     "type": "num",
+     "unit": "A²s",
+     "desc": "melting I²t"
+    },
+    "trip_time": {
+     "type": "num",
+     "unit": "s",
+     "desc": "PTC time to trip, at the datasheet's stated current"
+    }
+   },
+   "aliases": {
+    "i": "current",
+    "ihold": "current",
+    "itrip": "trip_current",
+    "v": "voltage"
+   }
+  },
+  "varistor": {
+   "desc": "MOV or other varistor, surge suppressor that is not a TVS diode",
+   "fields": {
+    "voltage": {
+     "type": "num",
+     "unit": "V",
+     "desc": "varistor voltage at 1 mA"
+    },
+    "vrms_max": {
+     "type": "num",
+     "unit": "V"
+    },
+    "vdc_max": {
+     "type": "num",
+     "unit": "V"
+    },
+    "clamp": {
+     "type": "num",
+     "unit": "V"
+    },
+    "surge_current": {
+     "type": "num",
+     "unit": "A"
+    },
+    "energy": {
+     "type": "num",
+     "unit": "J"
+    }
+   },
+   "aliases": {
+    "v": "voltage"
+   }
+  },
+  "diode": {
+   "desc": "rectifier, Schottky, signal or fast-recovery diode, and diode pairs (not Zener, TVS, LED, bridge)",
+   "fields": {
+    "type": {
+     "type": "enum",
+     "values": [
+      "schottky",
+      "rectifier",
+      "fast_recovery",
+      "switching"
+     ]
+    },
+    "vr": {
+     "type": "num",
+     "unit": "V",
+     "desc": "maximum reverse (DC blocking) voltage"
+    },
+    "if": {
+     "type": "num",
+     "unit": "A",
+     "desc": "average forward current"
+    },
+    "vf": {
+     "type": "cond",
+     "unit": "V",
+     "at": "if",
+     "at_unit": "A",
+     "desc": "forward voltage at a forward current"
+    },
+    "ifsm": {
+     "type": "num",
+     "unit": "A",
+     "desc": "non-repetitive surge current"
+    },
+    "ir": {
+     "type": "num",
+     "unit": "A",
+     "desc": "reverse leakage at vr"
+    },
+    "trr": {
+     "type": "num",
+     "unit": "s"
+    },
+    "cj": {
+     "type": "num",
+     "unit": "F"
+    },
+    "configuration": {
+     "type": "enum",
+     "values": [
+      "single",
+      "dual_common_cathode",
+      "dual_common_anode",
+      "dual_series",
+      "dual_independent"
+     ]
+    },
+    "ir_voltage": {
+     "type": "num",
+     "unit": "V",
+     "desc": "the reverse voltage ir is given at, when not vr",
+     "condition_of": "ir"
+    }
+   },
+   "aliases": {
+    "voltage": "vr",
+    "v": "vr",
+    "current": "if",
+    "i": "if",
+    "schottky": "type"
+   }
+  },
+  "bridge_rectifier": {
+   "desc": "bridge rectifier",
+   "fields": {
+    "vr": {
+     "type": "num",
+     "unit": "V"
+    },
+    "if": {
+     "type": "num",
+     "unit": "A"
+    },
+    "vf": {
+     "type": "cond",
+     "unit": "V",
+     "at": "if",
+     "at_unit": "A",
+     "desc": "per diode"
+    },
+    "ifsm": {
+     "type": "num",
+     "unit": "A"
+    },
+    "phases": {
+     "type": "int"
+    }
+   },
+   "aliases": {
+    "voltage": "vr",
+    "v": "vr",
+    "current": "if",
+    "i": "if"
+   }
+  },
+  "zener": {
+   "desc": "Zener diode",
+   "fields": {
+    "vz": {
+     "type": "num",
+     "unit": "V",
+     "desc": "nominal Zener voltage"
+    },
+    "vz_range": {
+     "type": "range",
+     "unit": "V",
+     "desc": "min and max Zener voltage"
+    },
+    "tolerance": {
+     "type": "num",
+     "unit": "%"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W"
+    },
+    "izt": {
+     "type": "num",
+     "unit": "A",
+     "desc": "test current",
+     "condition_of": "vz"
+    },
+    "zzt": {
+     "type": "num",
+     "unit": "Ω"
+    }
+   },
+   "aliases": {
+    "voltage": "vz",
+    "v": "vz",
+    "zener": "vz",
+    "p": "power"
+   }
+  },
+  "tvs": {
+   "desc": "TVS diode or ESD protection array",
+   "fields": {
+    "direction": {
+     "type": "enum",
+     "values": [
+      "uni",
+      "bi"
+     ]
+    },
+    "vrwm": {
+     "type": "num",
+     "unit": "V",
+     "desc": "reverse stand-off (working) voltage"
+    },
+    "vbr": {
+     "type": "num",
+     "unit": "V",
+     "desc": "minimum breakdown voltage"
+    },
+    "clamp": {
+     "type": "num",
+     "unit": "V",
+     "desc": "clamping voltage at ipp"
+    },
+    "ipp": {
+     "type": "num",
+     "unit": "A",
+     "desc": "peak pulse current (8/20 µs unless only 10/1000 is given)"
+    },
+    "ppp": {
+     "type": "num",
+     "unit": "W",
+     "desc": "peak pulse power"
+    },
+    "cj": {
+     "type": "num",
+     "unit": "F"
+    },
+    "esd": {
+     "type": "num",
+     "unit": "V",
+     "desc": "IEC 61000-4-2 contact rating"
+    },
+    "clamp_current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "the current clamp is given at, when not ipp",
+     "condition_of": "clamp"
+    }
+   },
+   "aliases": {
+    "voltage": "vrwm",
+    "v": "vrwm",
+    "polarity": "direction"
+   }
+  },
+  "led": {
+   "desc": "LED, single or multi-color, including addressable (built-in driver) LEDs",
+   "fields": {
+    "color": {
+     "type": "enums",
+     "values": [
+      "red",
+      "orange",
+      "amber",
+      "yellow",
+      "green",
+      "blue",
+      "white",
+      "warm_white",
+      "uv",
+      "ir",
+      "rgb",
+      "pink",
+      "purple"
+     ]
+    },
+    "vf": {
+     "type": "cond",
+     "unit": "V",
+     "at": "if",
+     "at_unit": "A"
+    },
+    "if": {
+     "type": "num",
+     "unit": "A",
+     "desc": "maximum continuous forward current"
+    },
+    "wavelength": {
+     "type": "num",
+     "unit": "nm",
+     "desc": "dominant; for multi-color leave out"
+    },
+    "intensity": {
+     "type": "num",
+     "unit": "mcd"
+    },
+    "addressable": {
+     "type": "bool"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V",
+     "desc": "addressable LEDs"
+    },
+    "cct": {
+     "type": "num",
+     "unit": "K",
+     "desc": "white LEDs: colour temperature"
+    },
+    "vf_range": {
+     "type": "range",
+     "unit": "V",
+     "desc": "min and max forward voltage, when the datasheet gives a range"
+    }
+   },
+   "aliases": {
+    "colour": "color",
+    "current": "if",
+    "i": "if"
+   }
+  },
+  "bjt": {
+   "desc": "bipolar transistor, single, dual, Darlington or array",
+   "fields": {
+    "polarity": {
+     "type": "enum",
+     "values": [
+      "npn",
+      "pnp",
+      "npn_pnp"
+     ]
+    },
+    "vceo": {
+     "type": "num",
+     "unit": "V"
+    },
+    "ic": {
+     "type": "num",
+     "unit": "A",
+     "desc": "maximum continuous collector current"
+    },
+    "hfe": {
+     "type": "num",
+     "desc": "minimum DC current gain"
+    },
+    "vce_sat": {
+     "type": "num",
+     "unit": "V"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W"
+    },
+    "ft": {
+     "type": "num",
+     "unit": "Hz"
+    },
+    "darlington": {
+     "type": "bool"
+    },
+    "resistors": {
+     "type": "bool",
+     "desc": "digital (pre-biased) transistor"
+    }
+   },
+   "aliases": {
+    "voltage": "vceo",
+    "v": "vceo",
+    "current": "ic",
+    "i": "ic",
+    "gain": "hfe",
+    "type": "polarity"
+   }
+  },
+  "mosfet": {
+   "desc": "MOSFET, single or dual",
+   "fields": {
+    "channel": {
+     "type": "enum",
+     "values": [
+      "n",
+      "p",
+      "n_p"
+     ],
+     "desc": "n_p: one of each in the package"
+    },
+    "vds": {
+     "type": "num",
+     "unit": "V",
+     "desc": "maximum drain-source voltage"
+    },
+    "id": {
+     "type": "num",
+     "unit": "A",
+     "desc": "continuous drain current, at 25 °C case unless only ambient is given"
+    },
+    "rds_on": {
+     "type": "cond",
+     "unit": "Ω",
+     "at": "vgs",
+     "at_unit": "V",
+     "desc": "maximum on-resistance at a gate voltage; one entry per vgs the datasheet gives"
+    },
+    "vgs_th": {
+     "type": "range",
+     "unit": "V",
+     "desc": "gate threshold min and max, as magnitudes"
+    },
+    "vgs_max": {
+     "type": "num",
+     "unit": "V",
+     "desc": "± gate-source limit, as a magnitude"
+    },
+    "qg": {
+     "type": "num",
+     "unit": "C",
+     "desc": "total gate charge"
+    },
+    "ciss": {
+     "type": "num",
+     "unit": "F"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W"
+    }
+   },
+   "aliases": {
+    "voltage": "vds",
+    "v": "vds",
+    "current": "id",
+    "i": "id",
+    "rds": "rds_on",
+    "rdson": "rds_on",
+    "vth": "vgs_th",
+    "vgsth": "vgs_th",
+    "polarity": "channel",
+    "type": "channel"
+   }
+  },
+  "jfet": {
+   "desc": "junction FET, single or dual (matched pairs: channels 2)",
+   "fields": {
+    "channel": {
+     "type": "enum",
+     "values": [
+      "n",
+      "p"
+     ]
+    },
+    "vds": {
+     "type": "num",
+     "unit": "V",
+     "desc": "maximum drain-source (or drain-gate) voltage"
+    },
+    "idss": {
+     "type": "range",
+     "unit": "A",
+     "desc": "zero-gate-voltage drain current, min and max"
+    },
+    "vgs_off": {
+     "type": "range",
+     "unit": "V",
+     "desc": "gate-source cutoff (pinch-off) voltage min and max, as magnitudes"
+    },
+    "gfs": {
+     "type": "num",
+     "unit": "S",
+     "desc": "forward transconductance"
+    },
+    "rds_on": {
+     "type": "num",
+     "unit": "Ω",
+     "desc": "maximum drain-source on-resistance, switching JFETs"
+    },
+    "noise": {
+     "type": "num",
+     "unit": "V/√Hz",
+     "desc": "input voltage noise density at 1 kHz"
+    }
+   },
+   "aliases": {
+    "polarity": "channel",
+    "type": "channel",
+    "voltage": "vds",
+    "v": "vds",
+    "vp": "vgs_off",
+    "vgsoff": "vgs_off",
+    "pinch_off": "vgs_off",
+    "rds": "rds_on"
+   }
+  },
+  "thyristor": {
+   "desc": "thyristor: triac or SCR",
+   "fields": {
+    "type": {
+     "type": "enum",
+     "values": [
+      "triac",
+      "scr"
+     ]
+    },
+    "vdrm": {
+     "type": "num",
+     "unit": "V",
+     "desc": "repetitive peak off-state voltage"
+    },
+    "it_rms": {
+     "type": "num",
+     "unit": "A",
+     "desc": "on-state rms current"
+    },
+    "itsm": {
+     "type": "num",
+     "unit": "A",
+     "desc": "non-repetitive surge peak on-state current"
+    },
+    "igt": {
+     "type": "num",
+     "unit": "A",
+     "desc": "maximum gate trigger current"
+    },
+    "ih": {
+     "type": "num",
+     "unit": "A",
+     "desc": "holding current"
+    },
+    "insulated": {
+     "type": "bool",
+     "desc": "tab or base insulated from the terminals"
+    }
+   },
+   "aliases": {
+    "voltage": "vdrm",
+    "v": "vdrm",
+    "current": "it_rms",
+    "i": "it_rms",
+    "gate": "igt"
+   }
+  },
+  "optocoupler": {
+   "desc": "optocoupler / optoisolator / photo-relay",
+   "fields": {
+    "output": {
+     "type": "enum",
+     "values": [
+      "phototransistor",
+      "darlington",
+      "photovoltaic",
+      "logic",
+      "triac",
+      "mosfet"
+     ]
+    },
+    "isolation": {
+     "type": "num",
+     "unit": "V",
+     "desc": "Vrms"
+    },
+    "ctr": {
+     "type": "range",
+     "unit": "%",
+     "desc": "current transfer ratio"
+    },
+    "if": {
+     "type": "num",
+     "unit": "A"
+    },
+    "vceo": {
+     "type": "num",
+     "unit": "V"
+    }
+   },
+   "aliases": {
+    "v": "isolation"
+   }
+  },
+  "opamp": {
+   "desc": "operational amplifier, including precision, FET-input and audio op amps",
+   "fields": {
+    "supply": {
+     "type": "range",
+     "unit": "V",
+     "desc": "total supply span (V+ minus V-); ±15 V is [null, 30] or the datasheet's single-supply range"
+    },
+    "gbw": {
+     "type": "num",
+     "unit": "Hz"
+    },
+    "slew": {
+     "type": "num",
+     "unit": "V/s"
+    },
+    "vos": {
+     "type": "num",
+     "unit": "V",
+     "desc": "maximum input offset at 25 °C (typical when that is all that is given)"
+    },
+    "ib": {
+     "type": "num",
+     "unit": "A",
+     "desc": "input bias current"
+    },
+    "iq": {
+     "type": "num",
+     "unit": "A",
+     "desc": "quiescent current per amplifier"
+    },
+    "noise": {
+     "type": "num",
+     "unit": "V/√Hz",
+     "desc": "input voltage noise density at 1 kHz"
+    },
+    "rail_to_rail": {
+     "type": "enum",
+     "values": [
+      "none",
+      "in",
+      "out",
+      "in_out"
+     ]
+    },
+    "input": {
+     "type": "enum",
+     "values": [
+      "bipolar",
+      "cmos",
+      "jfet"
+     ]
+    },
+    "output_current": {
+     "type": "num",
+     "unit": "A"
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "voltage": "supply",
+    "rrio": "rail_to_rail",
+    "rr": "rail_to_rail",
+    "gain_bandwidth": "gbw"
+   }
+  },
+  "comparator": {
+   "desc": "voltage comparator",
+   "fields": {
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "output": {
+     "type": "enum",
+     "values": [
+      "open_drain",
+      "push_pull"
+     ],
+     "desc": "open collector counts as open_drain"
+    },
+    "delay": {
+     "type": "num",
+     "unit": "s",
+     "desc": "propagation delay"
+    },
+    "iq": {
+     "type": "num",
+     "unit": "A",
+     "desc": "per comparator"
+    },
+    "vos": {
+     "type": "num",
+     "unit": "V"
+    },
+    "rail_to_rail": {
+     "type": "enum",
+     "values": [
+      "none",
+      "in",
+      "out",
+      "in_out"
+     ]
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "voltage": "supply"
+   }
+  },
+  "ldo": {
+   "desc": "linear regulator, fixed or adjustable (LDO or not)",
+   "fields": {
+    "vout": {
+     "type": "num",
+     "unit": "V",
+     "desc": "fixed output; leave out for an adjustable"
+    },
+    "vout_range": {
+     "type": "range",
+     "unit": "V",
+     "desc": "adjustable output range"
+    },
+    "adjustable": {
+     "type": "bool"
+    },
+    "vin": {
+     "type": "range",
+     "unit": "V",
+     "desc": "input range"
+    },
+    "iout": {
+     "type": "num",
+     "unit": "A",
+     "desc": "maximum output current"
+    },
+    "dropout": {
+     "type": "cond",
+     "unit": "V",
+     "at": "iout",
+     "at_unit": "A"
+    },
+    "iq": {
+     "type": "num",
+     "unit": "A"
+    },
+    "psrr": {
+     "type": "num",
+     "unit": "dB",
+     "desc": "at the lowest frequency given (usually 100 Hz or 1 kHz)"
+    },
+    "accuracy": {
+     "type": "num",
+     "unit": "%",
+     "desc": "output accuracy, ±"
+    },
+    "polarity": {
+     "type": "enum",
+     "values": [
+      "positive",
+      "negative"
+     ]
+    },
+    "enable": {
+     "type": "bool"
+    }
+   },
+   "aliases": {
+    "v": "vout",
+    "voltage": "vout",
+    "supply": "vin",
+    "current": "iout",
+    "i": "iout"
+   }
+  },
+  "switching_regulator": {
+   "desc": "DC-DC converter or controller: buck, boost, buck-boost, inverting, charge pump, flyback",
+   "fields": {
+    "topology": {
+     "type": "enum",
+     "values": [
+      "buck",
+      "boost",
+      "buck_boost",
+      "sepic",
+      "inverting",
+      "flyback",
+      "charge_pump"
+     ],
+     "desc": "the main topology; a part that does several (MC34063A) lists the others in also"
+    },
+    "vin": {
+     "type": "range",
+     "unit": "V"
+    },
+    "vout": {
+     "type": "num",
+     "unit": "V",
+     "desc": "fixed output; leave out for an adjustable"
+    },
+    "vout_range": {
+     "type": "range",
+     "unit": "V"
+    },
+    "adjustable": {
+     "type": "bool"
+    },
+    "iout": {
+     "type": "num",
+     "unit": "A",
+     "desc": "maximum output (or switch) current"
+    },
+    "switch_current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "switch current limit, when given instead of iout"
+    },
+    "fsw": {
+     "type": "range",
+     "unit": "Hz",
+     "desc": "switching frequency; one fixed frequency is [f, f]"
+    },
+    "integrated_switch": {
+     "type": "bool",
+     "desc": "false for a controller that drives an external FET"
+    },
+    "synchronous": {
+     "type": "bool"
+    },
+    "iq": {
+     "type": "num",
+     "unit": "A"
+    },
+    "also": {
+     "type": "enums",
+     "values": [
+      "buck",
+      "boost",
+      "buck_boost",
+      "sepic",
+      "inverting",
+      "flyback",
+      "charge_pump"
+     ],
+     "desc": "other topologies it can be wired as"
+    },
+    "polarity": {
+     "type": "enum",
+     "values": [
+      "positive",
+      "negative"
+     ],
+     "desc": "the output's sign: negative for an inverter or a charge-pump inverter (ICL7660: −VIN)"
+    }
+   },
+   "aliases": {
+    "supply": "vin",
+    "v": "vout",
+    "voltage": "vout",
+    "current": "iout",
+    "i": "iout",
+    "type": "topology"
+   }
+  },
+  "voltage_reference": {
+   "desc": "voltage reference, series or shunt",
+   "fields": {
+    "vout": {
+     "type": "num",
+     "unit": "V"
+    },
+    "adjustable": {
+     "type": "bool"
+    },
+    "vout_range": {
+     "type": "range",
+     "unit": "V"
+    },
+    "accuracy": {
+     "type": "num",
+     "unit": "%"
+    },
+    "tempco": {
+     "type": "num",
+     "unit": "ppm/°C"
+    },
+    "shunt": {
+     "type": "bool"
+    },
+    "current": {
+     "type": "range",
+     "unit": "A",
+     "desc": "cathode / operating current range"
+    }
+   },
+   "aliases": {
+    "v": "vout",
+    "voltage": "vout"
+   }
+  },
+  "power_switch": {
+   "desc": "load switch, power-distribution switch, eFuse, ideal diode, hot-swap",
+   "fields": {
+    "function": {
+     "type": "enum",
+     "values": [
+      "load_switch",
+      "usb_power_switch",
+      "efuse",
+      "ideal_diode",
+      "high_side_switch",
+      "hot_swap"
+     ]
+    },
+    "vin": {
+     "type": "range",
+     "unit": "V"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "maximum continuous current or current-limit setting"
+    },
+    "rds_on": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "current_limit": {
+     "type": "bool"
+    },
+    "reverse_blocking": {
+     "type": "bool"
+    },
+    "external_fet": {
+     "type": "bool",
+     "desc": "a controller that drives external FETs"
+    }
+   },
+   "aliases": {
+    "supply": "vin",
+    "v": "vin",
+    "i": "current",
+    "rds": "rds_on"
+   }
+  },
+  "battery_charger": {
+   "desc": "battery charger or battery-management IC",
+   "fields": {
+    "chemistry": {
+     "type": "enums",
+     "values": [
+      "li_ion",
+      "lifepo4",
+      "nimh",
+      "lead_acid"
+     ]
+    },
+    "cells": {
+     "type": "int"
+    },
+    "vin": {
+     "type": "range",
+     "unit": "V"
+    },
+    "charge_current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "maximum"
+    },
+    "vfloat": {
+     "type": "num",
+     "unit": "V",
+     "desc": "charge termination voltage per cell"
+    },
+    "power_path": {
+     "type": "bool"
+    }
+   },
+   "aliases": {
+    "supply": "vin",
+    "i": "charge_current",
+    "current": "charge_current"
+   }
+  },
+  "supervisor": {
+   "desc": "voltage supervisor, reset IC, watchdog",
+   "fields": {
+    "threshold": {
+     "type": "num",
+     "unit": "V"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "output": {
+     "type": "enum",
+     "values": [
+      "open_drain",
+      "push_pull"
+     ]
+    },
+    "active": {
+     "type": "enum",
+     "values": [
+      "low",
+      "high"
+     ]
+    },
+    "watchdog": {
+     "type": "bool"
+    },
+    "iq": {
+     "type": "num",
+     "unit": "A"
+    }
+   },
+   "aliases": {
+    "v": "threshold",
+    "voltage": "threshold"
+   }
+  },
+  "current_monitor": {
+   "desc": "current-sense amplifier or power monitor",
+   "fields": {
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "common_mode": {
+     "type": "range",
+     "unit": "V",
+     "desc": "bus / common-mode input range"
+    },
+    "gain": {
+     "type": "num",
+     "desc": "V/V; leave out for a digital monitor"
+    },
+    "interface": {
+     "type": "enums",
+     "values": [
+      "analog",
+      "i2c",
+      "spi",
+      "smbus"
+     ]
+    },
+    "bidirectional": {
+     "type": "bool"
+    }
+   },
+   "aliases": {
+    "v": "supply"
+   }
+  },
+  "isolation_amplifier": {
+   "desc": "isolation (isolated) amplifier: an analog signal carried across an isolation barrier",
+   "fields": {
+    "input_range": {
+     "type": "range",
+     "unit": "V",
+     "desc": "linear (specified) input voltage range"
+    },
+    "gain": {
+     "type": "num",
+     "desc": "V/V"
+    },
+    "bandwidth": {
+     "type": "num",
+     "unit": "Hz"
+    },
+    "isolation": {
+     "type": "num",
+     "unit": "V",
+     "desc": "withstand isolation voltage, Vrms"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V",
+     "desc": "input-side (high-side) supply range"
+    },
+    "output": {
+     "type": "enum",
+     "values": [
+      "differential",
+      "single_ended"
+     ]
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "bw": "bandwidth",
+    "input": "input_range"
+   }
+  },
+  "ac_dc": {
+   "desc": "AC-DC controller or switcher IC, or an AC-DC power module",
+   "fields": {
+    "vin": {
+     "type": "range",
+     "unit": "V",
+     "desc": "AC input range, Vrms"
+    },
+    "vout": {
+     "type": "num",
+     "unit": "V",
+     "desc": "modules only"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W"
+    },
+    "topology": {
+     "type": "enum",
+     "values": [
+      "flyback",
+      "buck",
+      "other"
+     ]
+    },
+    "module": {
+     "type": "bool"
+    }
+   },
+   "aliases": {
+    "supply": "vin",
+    "p": "power"
+   }
+  },
+  "power_module": {
+   "desc": "complete DC-DC power module (inductor inside)",
+   "fields": {
+    "vin": {
+     "type": "range",
+     "unit": "V"
+    },
+    "vout": {
+     "type": "num",
+     "unit": "V"
+    },
+    "vout_range": {
+     "type": "range",
+     "unit": "V"
+    },
+    "iout": {
+     "type": "num",
+     "unit": "A"
+    },
+    "isolated": {
+     "type": "bool"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W"
+    }
+   },
+   "aliases": {
+    "supply": "vin",
+    "v": "vout",
+    "i": "iout",
+    "current": "iout"
+   }
+  },
+  "led_driver": {
+   "desc": "LED driver IC",
+   "fields": {
+    "topology": {
+     "type": "enum",
+     "values": [
+      "linear",
+      "buck",
+      "boost",
+      "buck_boost",
+      "matrix",
+      "shift_register"
+     ]
+    },
+    "vin": {
+     "type": "range",
+     "unit": "V"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "per channel"
+    },
+    "interface": {
+     "type": "enums",
+     "values": [
+      "pwm",
+      "i2c",
+      "spi",
+      "none"
+     ]
+    },
+    "matrix": {
+     "type": "text",
+     "desc": "rows x columns, e.g. 16x8"
+    }
+   },
+   "aliases": {
+    "supply": "vin",
+    "i": "current"
+   }
+  },
+  "motor_driver": {
+   "desc": "motor driver: H-bridge, stepper, BLDC, gate driver for motors",
+   "fields": {
+    "motor": {
+     "type": "enums",
+     "values": [
+      "brushed_dc",
+      "stepper",
+      "bldc",
+      "solenoid"
+     ]
+    },
+    "vm": {
+     "type": "range",
+     "unit": "V",
+     "desc": "motor supply range"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "continuous output current per channel (peak when that is all that is given)"
+    },
+    "rds_on": {
+     "type": "num",
+     "unit": "Ω",
+     "desc": "high plus low side, typical (a characteristic of the driver's bridge, not a FET's guaranteed maximum)"
+    },
+    "interface": {
+     "type": "enums",
+     "values": [
+      "pwm",
+      "phase_enable",
+      "step_dir",
+      "spi",
+      "i2c",
+      "uart"
+     ]
+    },
+    "current_sense": {
+     "type": "bool"
+    }
+   },
+   "aliases": {
+    "supply": "vm",
+    "vin": "vm",
+    "v": "vm",
+    "i": "current"
+   }
+  },
+  "mcu": {
+   "desc": "microcontroller or SoC (not a module)",
+   "fields": {
+    "core": {
+     "type": "text",
+     "desc": "lower case, as written: cortex-m0+, cortex-m4, risc-v, avr, 8051, stm8, xtensa"
+    },
+    "frequency": {
+     "type": "num",
+     "unit": "Hz",
+     "desc": "maximum CPU clock"
+    },
+    "flash": {
+     "type": "num",
+     "unit": "B"
+    },
+    "ram": {
+     "type": "num",
+     "unit": "B"
+    },
+    "eeprom": {
+     "type": "num",
+     "unit": "B"
+    },
+    "gpio": {
+     "type": "int"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "peripherals": {
+     "type": "enums",
+     "values": [
+      "usb",
+      "usb_host",
+      "usb_pd",
+      "can",
+      "canfd",
+      "ethernet",
+      "uart",
+      "spi",
+      "i2c",
+      "i2s",
+      "sai",
+      "sdio",
+      "adc",
+      "dac",
+      "comparator",
+      "opamp",
+      "dma",
+      "rtc",
+      "touch",
+      "lcd",
+      "ble",
+      "wifi",
+      "zigbee",
+      "thread",
+      "crypto",
+      "hrtim"
+     ]
+    },
+    "adc_bits": {
+     "type": "int"
+    }
+   },
+   "aliases": {
+    "f": "frequency",
+    "freq": "frequency",
+    "clock": "frequency",
+    "v": "supply",
+    "io": "gpio"
+   }
+  },
+  "wireless_module": {
+   "desc": "radio module: Wi-Fi, Bluetooth, LoRa, cellular, with or without an MCU inside",
+   "fields": {
+    "radio": {
+     "type": "enums",
+     "values": [
+      "wifi",
+      "ble",
+      "bt_classic",
+      "zigbee",
+      "thread",
+      "lora",
+      "sub_ghz",
+      "cellular",
+      "gnss",
+      "uwb"
+     ]
+    },
+    "chip": {
+     "type": "text",
+     "desc": "the SoC inside, lower case: esp32-c3, esp32-s3, nrf52840"
+    },
+    "flash": {
+     "type": "num",
+     "unit": "B"
+    },
+    "ram": {
+     "type": "num",
+     "unit": "B",
+     "desc": "on-chip SRAM"
+    },
+    "antenna": {
+     "type": "enum",
+     "values": [
+      "pcb",
+      "chip",
+      "external",
+      "ufl"
+     ]
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "gpio": {
+     "type": "int"
+    },
+    "psram": {
+     "type": "num",
+     "unit": "B"
+    }
+   },
+   "aliases": {
+    "v": "supply"
+   }
+  },
+  "rf_amplifier": {
+   "desc": "RF or microwave amplifier: gain block, LNA, driver amplifier",
+   "fields": {
+    "freq": {
+     "type": "range",
+     "unit": "Hz",
+     "desc": "the frequency range the datasheet specifies"
+    },
+    "gain": {
+     "type": "cond",
+     "unit": "dB",
+     "at": "freq",
+     "at_unit": "Hz",
+     "desc": "small-signal gain at a frequency; one entry per frequency the datasheet's specification table gives"
+    },
+    "nf": {
+     "type": "cond",
+     "unit": "dB",
+     "at": "freq",
+     "at_unit": "Hz",
+     "desc": "noise figure at a frequency; one entry per frequency the datasheet's specification table gives"
+    },
+    "p1db": {
+     "type": "cond",
+     "unit": "dBm",
+     "at": "freq",
+     "at_unit": "Hz",
+     "desc": "output power at 1 dB compression at a frequency; one entry per frequency the table gives"
+    },
+    "oip3": {
+     "type": "cond",
+     "unit": "dBm",
+     "at": "freq",
+     "at_unit": "Hz",
+     "desc": "output third-order intercept at a frequency; one entry per frequency the table gives"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V",
+     "desc": "device (or bias) supply voltage"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "supply (device) current"
+    },
+    "impedance": {
+     "type": "num",
+     "unit": "Ω",
+     "desc": "the system impedance it is matched to (50, 75)"
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "frequency": "freq",
+    "noise_figure": "nf",
+    "ip3": "oip3",
+    "z": "impedance"
+   }
+  },
+  "rf_filter": {
+   "desc": "RF filter: LC, ceramic, LTCC, SAW or BAW low-, high-, band-pass or band-stop",
+   "fields": {
+    "type": {
+     "type": "enum",
+     "values": [
+      "low_pass",
+      "high_pass",
+      "band_pass",
+      "band_stop"
+     ]
+    },
+    "passband": {
+     "type": "range",
+     "unit": "Hz",
+     "desc": "pass band (a low-pass from DC is [0, f])"
+    },
+    "insertion_loss": {
+     "type": "num",
+     "unit": "dB",
+     "desc": "in the pass band"
+    },
+    "impedance": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W",
+     "desc": "maximum RF input power"
+    }
+   },
+   "aliases": {
+    "il": "insertion_loss",
+    "band": "passband",
+    "frequency": "passband",
+    "freq": "passband",
+    "z": "impedance"
+   }
+  },
+  "interface": {
+   "desc": "interface IC: transceiver (CAN, RS-485, RS-232, LIN), USB bridge or hub, I/O expander, level shifter, digital isolator, LCD driver",
+   "fields": {
+    "function": {
+     "type": "enum",
+     "values": [
+      "can",
+      "rs485",
+      "rs232",
+      "lin",
+      "usb_uart",
+      "usb_hub",
+      "usb_pd",
+      "usb_mux",
+      "io_expander",
+      "level_shifter",
+      "isolator",
+      "i2c_mux",
+      "lcd_driver",
+      "ethernet_phy",
+      "other"
+     ]
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "data_rate": {
+     "type": "num",
+     "unit": "bps"
+    },
+    "isolation": {
+     "type": "num",
+     "unit": "V",
+     "desc": "Vrms, isolators"
+    },
+    "duplex": {
+     "type": "enum",
+     "values": [
+      "half",
+      "full"
+     ]
+    },
+    "ports": {
+     "type": "int",
+     "desc": "hub downstream ports, expander I/O lines, isolator channels"
+    },
+    "bus": {
+     "type": "enums",
+     "values": [
+      "i2c",
+      "spi",
+      "uart",
+      "usb",
+      "parallel",
+      "3wire"
+     ],
+     "desc": "the host-side bus"
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "speed": "data_rate",
+    "rate": "data_rate"
+   }
+  },
+  "logic": {
+   "desc": "standard logic: gates, buffers, drivers, flip-flops, counters, shift registers, 555 timers",
+   "fields": {
+    "function": {
+     "type": "text",
+     "desc": "lower case, short: nand, inverter, buffer, d_flip_flop, shift_register, counter, decoder, timer"
+    },
+    "family": {
+     "type": "text",
+     "desc": "74hc, 74hct, 74lvc, 74ahc, cd4000, ne555 ..."
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "output": {
+     "type": "enum",
+     "values": [
+      "push_pull",
+      "open_drain",
+      "tristate"
+     ]
+    },
+    "schmitt": {
+     "type": "bool"
+    },
+    "delay": {
+     "type": "num",
+     "unit": "s",
+     "desc": "propagation delay at the typical supply"
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "type": "function"
+   }
+  },
+  "analog_switch": {
+   "desc": "analog switch or multiplexer",
+   "fields": {
+    "configuration": {
+     "type": "text",
+     "desc": "e.g. spst, spdt, 8:1, 2x4:1"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "ron": {
+     "type": "num",
+     "unit": "Ω"
+    },
+    "bandwidth": {
+     "type": "num",
+     "unit": "Hz"
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "rds_on": "ron"
+   }
+  },
+  "adc": {
+   "desc": "analog-to-digital converter",
+   "fields": {
+    "bits": {
+     "type": "int"
+    },
+    "rate": {
+     "type": "num",
+     "unit": "sps"
+    },
+    "inputs": {
+     "type": "int"
+    },
+    "interface": {
+     "type": "enums",
+     "values": [
+      "i2c",
+      "spi",
+      "parallel"
+     ]
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "reference": {
+     "type": "enum",
+     "values": [
+      "internal",
+      "external",
+      "both"
+     ]
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "resolution": "bits"
+   }
+  },
+  "dac": {
+   "desc": "digital-to-analog converter",
+   "fields": {
+    "bits": {
+     "type": "int"
+    },
+    "outputs": {
+     "type": "int"
+    },
+    "interface": {
+     "type": "enums",
+     "values": [
+      "i2c",
+      "spi",
+      "parallel"
+     ]
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "reference": {
+     "type": "enum",
+     "values": [
+      "internal",
+      "external",
+      "both"
+     ]
+    },
+    "output": {
+     "type": "enum",
+     "values": [
+      "voltage",
+      "current"
+     ]
+    },
+    "settling": {
+     "type": "num",
+     "unit": "s",
+     "desc": "output settling time"
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "resolution": "bits"
+   }
+  },
+  "memory": {
+   "desc": "EEPROM, flash, FRAM, SRAM",
+   "fields": {
+    "type": {
+     "type": "enum",
+     "values": [
+      "eeprom",
+      "nor_flash",
+      "nand_flash",
+      "fram",
+      "sram"
+     ]
+    },
+    "size": {
+     "type": "num",
+     "unit": "bit"
+    },
+    "interface": {
+     "type": "enums",
+     "values": [
+      "i2c",
+      "spi",
+      "qspi",
+      "parallel"
+     ]
+    },
+    "clock": {
+     "type": "num",
+     "unit": "Hz"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "capacity": "size"
+   }
+  },
+  "rtc": {
+   "desc": "real-time clock",
+   "fields": {
+    "interface": {
+     "type": "enums",
+     "values": [
+      "i2c",
+      "spi",
+      "3wire"
+     ]
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "iq": {
+     "type": "num",
+     "unit": "A",
+     "desc": "timekeeping current"
+    },
+    "crystal": {
+     "type": "bool",
+     "desc": "crystal inside"
+    },
+    "alarm": {
+     "type": "bool"
+    }
+   },
+   "aliases": {
+    "v": "supply"
+   }
+  },
+  "sensor": {
+   "desc": "sensor IC: magnetic (Hall), temperature, humidity, IMU, pressure, light, current",
+   "fields": {
+    "measures": {
+     "type": "enums",
+     "values": [
+      "magnetic_field",
+      "magnetic_angle",
+      "temperature",
+      "humidity",
+      "acceleration",
+      "rotation",
+      "magnetometer",
+      "pressure",
+      "light",
+      "proximity",
+      "current",
+      "gas",
+      "sound",
+      "thermocouple"
+     ]
+    },
+    "output": {
+     "type": "enums",
+     "values": [
+      "analog",
+      "digital_switch",
+      "i2c",
+      "spi",
+      "pwm",
+      "uart",
+      "1wire"
+     ]
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "iq": {
+     "type": "num",
+     "unit": "A"
+    },
+    "accuracy": {
+     "type": "text",
+     "desc": "as the datasheet says it: ±0.3 °C, ±2 %RH"
+    },
+    "hall_function": {
+     "type": "enum",
+     "values": [
+      "unipolar",
+      "bipolar",
+      "omnipolar",
+      "latch",
+      "linear"
+     ],
+     "desc": "Hall switches and sensors"
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "type": "measures"
+   }
+  },
+  "thermistor": {
+   "desc": "resistor made to follow temperature, used as a sensor: NTC or PTC chip thermistor, platinum resistance sensor (Pt100, Pt500, Pt1000)",
+   "fields": {
+    "type": {
+     "type": "enum",
+     "values": [
+      "ntc",
+      "ptc",
+      "platinum"
+     ]
+    },
+    "resistance": {
+     "type": "num",
+     "unit": "Ω",
+     "desc": "nominal resistance at ref_temp"
+    },
+    "ref_temp": {
+     "type": "num",
+     "unit": "°C",
+     "desc": "the temperature the nominal resistance is stated at: 25 for most thermistors, 0 for a platinum sensor"
+    },
+    "tolerance": {
+     "type": "num",
+     "unit": "%",
+     "desc": "±, on the nominal resistance at ref_temp, as a positive number; a platinum sensor states a tolerance_class instead"
+    },
+    "b": {
+     "type": "cond",
+     "unit": "K",
+     "at": "t2",
+     "at_unit": "°C",
+     "desc": "B constant between 25 °C and t2, one entry per pair the datasheet gives; the first entry is the pair the part is specified and toleranced over"
+    },
+    "b_tolerance": {
+     "type": "num",
+     "unit": "%",
+     "desc": "±, on the first b entry"
+    },
+    "tcr": {
+     "type": "num",
+     "unit": "ppm/°C",
+     "desc": "a platinum sensor's mean temperature coefficient from 0 to 100 °C (3850 for the IEC 60751 curve)"
+    },
+    "tolerance_class": {
+     "type": "enum",
+     "values": [
+      "f0.1",
+      "f0.15",
+      "f0.3",
+      "f0.6"
+     ],
+     "desc": "IEC 60751 class of a platinum sensor: F0.1 is ±(0.10 + 0.0017|T|) °C (1/3 B), F0.15 ±(0.15 + 0.002|T|) °C (A), F0.3 ±(0.30 + 0.005|T|) °C (B), F0.6 ±(0.60 + 0.010|T|) °C (2B)"
+    },
+    "class_temp": {
+     "type": "range",
+     "unit": "°C",
+     "desc": "the temperature range the tolerance_class holds over"
+    },
+    "power": {
+     "type": "num",
+     "unit": "W",
+     "desc": "rated power at 25 °C"
+    },
+    "current_max": {
+     "type": "num",
+     "unit": "A",
+     "desc": "largest continuous measuring current the datasheet allows"
+    },
+    "dissipation_constant": {
+     "type": "num",
+     "unit": "W/°C",
+     "desc": "power that warms the part 1 °C above its surroundings (a self-heating figure in K/mW is its inverse)"
+    },
+    "time_constant": {
+     "type": "num",
+     "unit": "s",
+     "desc": "thermal time constant, the datasheet's maximum or typical"
+    }
+   },
+   "aliases": {
+    "r": "resistance",
+    "res": "resistance",
+    "tol": "tolerance",
+    "beta": "b",
+    "class": "tolerance_class",
+    "i": "current_max"
+   }
+  },
+  "audio": {
+   "desc": "audio IC: power amplifier, codec, audio interface",
+   "fields": {
+    "function": {
+     "type": "enum",
+     "values": [
+      "amplifier",
+      "codec",
+      "adc",
+      "dac",
+      "interface"
+     ]
+    },
+    "class": {
+     "type": "enum",
+     "values": [
+      "a",
+      "ab",
+      "d",
+      "g"
+     ]
+    },
+    "power": {
+     "type": "num",
+     "unit": "W",
+     "desc": "output power per channel, at the datasheet's headline load"
+    },
+    "supply": {
+     "type": "range",
+     "unit": "V"
+    },
+    "interface": {
+     "type": "enums",
+     "values": [
+      "analog",
+      "i2s",
+      "tdm",
+      "pdm",
+      "i2c",
+      "spi"
+     ]
+    }
+   },
+   "aliases": {
+    "v": "supply",
+    "p": "power"
+   }
+  },
+  "display": {
+   "desc": "display or display module",
+   "fields": {
+    "technology": {
+     "type": "enum",
+     "values": [
+      "oled",
+      "lcd",
+      "tft",
+      "e_paper",
+      "led_matrix",
+      "seven_segment"
+     ]
+    },
+    "size": {
+     "type": "num",
+     "unit": "in",
+     "desc": "diagonal"
+    },
+    "resolution": {
+     "type": "text",
+     "desc": "128x64"
+    },
+    "controller": {
+     "type": "text",
+     "desc": "ssd1306, st7789 ..."
+    },
+    "interface": {
+     "type": "enums",
+     "values": [
+      "i2c",
+      "spi",
+      "parallel",
+      "mipi",
+      "rgb"
+     ]
+    },
+    "color": {
+     "type": "text"
+    }
+   },
+   "aliases": {}
+  },
+  "connector": {
+   "desc": "any connector, header, terminal block, socket or cable-side housing",
+   "fields": {
+    "style": {
+     "type": "enum",
+     "values": [
+      "pin_header",
+      "socket_header",
+      "wire_to_board",
+      "board_to_board",
+      "terminal_block",
+      "usb",
+      "audio",
+      "dc_jack",
+      "ffc_fpc",
+      "idc",
+      "card",
+      "rf",
+      "crimp_terminal",
+      "power",
+      "quick_connect",
+      "other"
+     ]
+    },
+    "pitch": {
+     "type": "num",
+     "unit": "mm"
+    },
+    "positions": {
+     "type": "int",
+     "desc": "total contacts that carry signals (shield and mounting pins left out)"
+    },
+    "rows": {
+     "type": "int"
+    },
+    "orientation": {
+     "type": "enum",
+     "values": [
+      "vertical",
+      "right_angle",
+      "horizontal"
+     ]
+    },
+    "gender": {
+     "type": "enum",
+     "values": [
+      "male",
+      "female",
+      "genderless"
+     ],
+     "desc": "male = pins/plug, female = socket/receptacle"
+    },
+    "series": {
+     "type": "text",
+     "desc": "maker series: jst ph, jst xh, molex picoblade, usb-c, 3.5mm trs"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "per contact"
+    },
+    "voltage": {
+     "type": "num",
+     "unit": "V"
+    },
+    "wire_gauge": {
+     "type": "range",
+     "unit": "AWG"
+    }
+   },
+   "aliases": {
+    "pins": "positions",
+    "p": "positions",
+    "n": "positions",
+    "type": "style",
+    "i": "current",
+    "v": "voltage",
+    "awg": "wire_gauge"
+   }
+  },
+  "switch": {
+   "desc": "mechanical switch: tactile, push, toggle, slide, DIP, rotary encoder",
+   "fields": {
+    "style": {
+     "type": "enum",
+     "values": [
+      "tactile",
+      "push",
+      "toggle",
+      "slide",
+      "dip",
+      "rotary",
+      "encoder",
+      "rocker",
+      "reed"
+     ]
+    },
+    "circuit": {
+     "type": "enum",
+     "values": [
+      "spst_no",
+      "spst_nc",
+      "spdt",
+      "dpdt",
+      "dpst",
+      "other"
+     ]
+    },
+    "positions": {
+     "type": "int",
+     "desc": "DIP: number of switches; rotary: positions"
+    },
+    "actuation_force": {
+     "type": "num",
+     "unit": "gf"
+    },
+    "current": {
+     "type": "num",
+     "unit": "A"
+    },
+    "voltage": {
+     "type": "num",
+     "unit": "V"
+    },
+    "orientation": {
+     "type": "enum",
+     "values": [
+      "top",
+      "side"
+     ]
+    },
+    "detents": {
+     "type": "int",
+     "desc": "encoders"
+    },
+    "pulses": {
+     "type": "int",
+     "desc": "encoders, per revolution"
+    },
+    "illuminated": {
+     "type": "bool"
+    }
+   },
+   "aliases": {
+    "type": "style",
+    "i": "current",
+    "v": "voltage"
+   }
+  },
+  "relay": {
+   "desc": "relay: electromechanical or solid-state",
+   "fields": {
+    "coil_voltage": {
+     "type": "num",
+     "unit": "V"
+    },
+    "contact": {
+     "type": "enum",
+     "values": [
+      "spst_no",
+      "spst_nc",
+      "spdt",
+      "dpdt"
+     ]
+    },
+    "current": {
+     "type": "num",
+     "unit": "A",
+     "desc": "contact rating"
+    },
+    "voltage": {
+     "type": "num",
+     "unit": "V",
+     "desc": "contact rating, the higher of AC and DC"
+    },
+    "solid_state": {
+     "type": "bool"
+    },
+    "latching": {
+     "type": "bool"
+    }
+   },
+   "aliases": {
+    "coil": "coil_voltage",
+    "i": "current",
+    "v": "voltage"
+   }
+  },
+  "mechanical": {
+   "desc": "no electrical function to search: battery contacts and holders, test points, standoffs, shields, welding terminals, buzzers with no spec worth searching",
+   "fields": {
+    "function": {
+     "type": "text",
+     "desc": "short, lower case: battery_contact, battery_holder, test_point, shield, solder_terminal"
+    }
+   },
+   "aliases": {}
+  },
+  "other": {
+   "desc": "nothing above fits; say what it is in `function` so a new kind can be made when a few gather",
+   "fields": {
+    "function": {
+     "type": "text"
+    }
+   },
+   "aliases": {}
+  }
+ },
+ "kind_aliases": {
+  "res": [
+   "resistor"
+  ],
+  "shunt": [
+   "resistor"
+  ],
+  "pot": [
+   "potentiometer"
+  ],
+  "trimmer": [
+   "potentiometer"
+  ],
+  "cap": [
+   "capacitor"
+  ],
+  "electrolytic": {
+   "kinds": [
+    "capacitor"
+   ],
+   "terms": {
+    "dielectric": "aluminum"
+   }
+  },
+  "tantalum": {
+   "kinds": [
+    "capacitor"
+   ],
+   "terms": {
+    "dielectric": "tantalum"
+   }
+  },
+  "coil": [
+   "inductor"
+  ],
+  "bead": [
+   "ferrite_bead"
+  ],
+  "ferrite": [
+   "ferrite_bead"
+  ],
+  "choke": [
+   "inductor",
+   "common_mode_choke"
+  ],
+  "xtal": [
+   "crystal"
+  ],
+  "oscillator": [
+   "crystal"
+  ],
+  "ptc": {
+   "kinds": [
+    "fuse"
+   ],
+   "terms": {
+    "resettable": "yes"
+   }
+  },
+  "polyfuse": {
+   "kinds": [
+    "fuse"
+   ],
+   "terms": {
+    "resettable": "yes"
+   }
+  },
+  "mov": [
+   "varistor"
+  ],
+  "schottky": {
+   "kinds": [
+    "diode"
+   ],
+   "terms": {
+    "type": "schottky"
+   }
+  },
+  "rectifier": [
+   "diode",
+   "bridge_rectifier"
+  ],
+  "bridge": [
+   "bridge_rectifier"
+  ],
+  "esd": [
+   "tvs"
+  ],
+  "transistor": [
+   "bjt",
+   "mosfet"
+  ],
+  "npn": {
+   "kinds": [
+    "bjt"
+   ],
+   "terms": {
+    "polarity": "npn"
+   }
+  },
+  "pnp": {
+   "kinds": [
+    "bjt"
+   ],
+   "terms": {
+    "polarity": "pnp"
+   }
+  },
+  "fet": [
+   "mosfet"
+  ],
+  "opto": [
+   "optocoupler"
+  ],
+  "optoisolator": [
+   "optocoupler"
+  ],
+  "op-amp": [
+   "opamp"
+  ],
+  "amplifier": [
+   "opamp",
+   "audio"
+  ],
+  "regulator": [
+   "ldo",
+   "switching_regulator"
+  ],
+  "linear_regulator": [
+   "ldo"
+  ],
+  "buck": {
+   "kinds": [
+    "switching_regulator"
+   ],
+   "terms": {
+    "topology": "buck"
+   }
+  },
+  "boost": {
+   "kinds": [
+    "switching_regulator"
+   ],
+   "terms": {
+    "topology": "boost"
+   }
+  },
+  "dc-dc": [
+   "switching_regulator",
+   "power_module"
+  ],
+  "converter": [
+   "switching_regulator",
+   "power_module",
+   "ac_dc"
+  ],
+  "reference": [
+   "voltage_reference"
+  ],
+  "load_switch": {
+   "kinds": [
+    "power_switch"
+   ],
+   "terms": {
+    "function": "load_switch"
+   }
+  },
+  "efuse": {
+   "kinds": [
+    "power_switch"
+   ],
+   "terms": {
+    "function": "efuse"
+   }
+  },
+  "charger": [
+   "battery_charger"
+  ],
+  "reset": [
+   "supervisor"
+  ],
+  "microcontroller": [
+   "mcu"
+  ],
+  "soc": [
+   "mcu"
+  ],
+  "module": [
+   "wireless_module",
+   "power_module"
+  ],
+  "wifi": {
+   "kinds": [
+    "wireless_module"
+   ],
+   "terms": {
+    "radio": "wifi"
+   }
+  },
+  "bluetooth": {
+   "kinds": [
+    "wireless_module"
+   ],
+   "terms": {
+    "radio": "ble"
+   }
+  },
+  "transceiver": [
+   "interface"
+  ],
+  "mux": [
+   "analog_switch"
+  ],
+  "eeprom": {
+   "kinds": [
+    "memory"
+   ],
+   "terms": {
+    "type": "eeprom"
+   }
+  },
+  "header": {
+   "kinds": [
+    "connector"
+   ],
+   "terms": {
+    "style": "pin_header,socket_header"
+   }
+  },
+  "terminal": [
+   "connector"
+  ],
+  "jack": [
+   "connector"
+  ],
+  "button": [
+   "switch"
+  ],
+  "encoder": [
+   "switch"
+  ],
+  "oled": [
+   "display"
+  ],
+  "lcd": [
+   "display"
+  ],
+  "gate": [
+   "logic"
+  ],
+  "timer": [
+   "logic"
+  ],
+  "nfet": {
+   "kinds": [
+    "mosfet"
+   ],
+   "terms": {
+    "channel": "n"
+   }
+  },
+  "pfet": {
+   "kinds": [
+    "mosfet"
+   ],
+   "terms": {
+    "channel": "p"
+   }
+  },
+  "zener_diode": [
+   "zener"
+  ],
+  "triac": {
+   "kinds": [
+    "thyristor"
+   ],
+   "terms": {
+    "type": "triac"
+   }
+  },
+  "scr": {
+   "kinds": [
+    "thyristor"
+   ],
+   "terms": {
+    "type": "scr"
+   }
+  },
+  "lna": [
+   "rf_amplifier"
+  ],
+  "rf_amp": [
+   "rf_amplifier"
+  ],
+  "lowpass": {
+   "kinds": [
+    "rf_filter"
+   ],
+   "terms": {
+    "type": "low_pass"
+   }
+  },
+  "highpass": {
+   "kinds": [
+    "rf_filter"
+   ],
+   "terms": {
+    "type": "high_pass"
+   }
+  },
+  "bandpass": {
+   "kinds": [
+    "rf_filter"
+   ],
+   "terms": {
+    "type": "band_pass"
+   }
+  },
+  "balun": {
+   "kinds": [
+    "transformer"
+   ],
+   "terms": {
+    "function": "rf"
+   }
+  },
+  "xfmr": [
+   "transformer"
+  ],
+  "isolated_amplifier": [
+   "isolation_amplifier"
+  ],
+  "iso_amp": [
+   "isolation_amplifier"
+  ],
+  "ntc": {
+   "kinds": [
+    "thermistor"
+   ],
+   "terms": {
+    "type": "ntc"
+   }
+  },
+  "rtd": {
+   "kinds": [
+    "thermistor"
+   ],
+   "terms": {
+    "type": "platinum"
+   }
+  },
+  "pt100": {
+   "kinds": [
+    "thermistor"
+   ],
+   "terms": {
+    "type": "platinum"
+   }
+  },
+  "pt1000": {
+   "kinds": [
+    "thermistor"
+   ],
+   "terms": {
+    "type": "platinum"
+   }
+  }
+ },
+ "about_kind_aliases": "words that name kinds in a search: `cloud-parts find fet vds:30V..`. A kind's own name works too, and a trailing s is dropped. A word given as {kinds, terms} also adds those terms: `schottky` is `diode type:schottky`.",
+ "convention": "Which figure a field holds where a datasheet gives several. A limit -- an absolute maximum, a guaranteed bound the schema names (rds_on is the maximum, vbr the minimum breakdown, vgs_th the min and max) -- is the guaranteed figure. A characteristic -- ciss, qg, gbw, slew, iq, noise, vos, ib, output_current, psrr, q, intensity, wavelength and the like -- is the typical figure. Where the datasheet gives only one of typical, min or max for a characteristic, that is the figure, named in the value's condition; where it gives min and max but no typical, it is the maximum. A motor driver's rds_on is the typical high plus low side (its desc says so), unlike a MOSFET's rds_on, which is the maximum.",
+ "word_implies": {
+  "in_out": [
+   "in",
+   "out"
+  ],
+  "n_p": [
+   "n",
+   "p"
+  ],
+  "npn_pnp": [
+   "npn",
+   "pnp"
+  ],
+  "tantalum_polymer": [
+   "tantalum",
+   "polymer"
+  ],
+  "buck_boost": [
+   "buck",
+   "boost"
+  ],
+  "canfd": [
+   "can"
+  ],
+  "usb_host": [
+   "usb"
+  ],
+  "warm_white": [
+   "white"
+  ]
+ },
+ "about_word_implies": "A filed word that also answers a search for another: a rail-to-rail in_out op amp is rail_to_rail = 'out'; a CAN FD MCU has CAN. Nothing else matches but the word itself."
+}

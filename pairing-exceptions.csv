@@ -1,0 +1,57 @@
+mpn,check,detail,reason
+"74HCT74BQ,115",pads have pins,15,"datasheet p.3 note 1: the DHVQFN14 centre pad is not a ground pin and need not be soldered; if soldered, leave it floating or tie it to GND"
+ADTL1-12+,pads have pins,2 5,datasheet p.1 pin connections: pins 2 and 5 not used
+ATSAMD09D14A-MUT,pads have pins,25,"datasheet p.8 QFN-24 pinout: ground is pin 23; the exposed pad carries no electrical requirement (p.683 gives only its size, 2.60 mm)"
+ATSAMD10D14A-MUT,pads have pins,25,"datasheet p.10 QFN-24 pinout: ground is pin 23; the exposed pad carries no electrical requirement (p.846 gives only its size, 2.60 mm)"
+BD4830FVE-TR,pads have pins,3,datasheet p.2 VSOF5 pin table: pin 3 N.C.
+CC2520RHDR,pads have pins,18,datasheet p.23-24 pinout: pin 18 NC (not connected)
+DP83848IVVX/NOPB,pads have pins,8 9 10 11 12,"datasheet p.6: pins 8-12 are the JTAG port (TCK, TDO, TMS, TRST#, TDI); p.8: the inputs have internal pull-ups, so the port may be left open"
+HCPL-0600-500E,pads have pins,4,datasheet p.1 single-channel pinout: pin 4 NC
+LM285D-2.5R2G,pads have pins,1 2 3 5 6 7,"datasheet p.1 SOIC-8: pins 1, 2, 3, 5, 6, 7 N.C. (4 anode, 8 cathode)"
+LM334MX/NOPB,pads have pins,5 8,"datasheet p.1 figure 1, SOIC-8: pins 5 and 8 NC"
+LM385D-1.2R2G,pads have pins,1 2 3 5 6 7,"datasheet p.1 SOIC-8: pins 1, 2, 3, 5, 6, 7 N.C. (4 anode, 8 cathode)"
+LM4030AMF-2.5/NOPB,pads have pins,1 2 3,"datasheet p.2 pin table SOT-23-5: pins 1 and 3 N/C (leave floating), pin 2 GND or N/C"
+LMP8640MKX-T/NOPB,pads have pins,5,"datasheet p.3 SOT-23-6: pin 5 NC, not internally connected"
+MSP430F5501IRGZT,pads have pins,49,"datasheet p.13 note and p.17: connecting the QFN exposed pad to VSS is recommended, not required; tie it to VSS with copper when wanted"
+MSP430FR5720IRGER,pads have pins,25,"datasheet p.13: connecting the QFN exposed pad to VSS is recommended, not required; tie it to VSS with copper when wanted"
+SCD40-D-R2,pads have pins,1 2 3 4 5 8 11 12 13 14 15 16 17 18,"datasheet p.5 table 6: pads 1-5, 8 and 11-18 are DNC, soldered to floating pads"
+1N5711WS-7-F,footprint fits symbol,Diode_SMD:D_SOD-323,"datasheet p.1: 1N5711WS in SOD323, cathode band; 2-pin symbol, 1 K, 2 A"
+1N5819HW-7-F,footprint fits symbol,Diode_SMD:D_SOD-123,"datasheet p.1: package SOD123, cathode band; 2-pin symbol, 1 K, 2 A"
+"74HC04D,653",footprint fits symbol,Package_SO:SOIC-14_3.9x8.7mm_P1.27mm,datasheet p.1 ordering: 74HC04D is SO14; the 74HC04 pinout is the same in every package
+"74HC14D,653",footprint fits symbol,Package_SO:SOIC-14_3.9x8.7mm_P1.27mm,datasheet p.1 ordering: 74HC14D is SO14; the 74HC14 pinout is the same in every package
+"74HC245D,653",footprint fits symbol,Package_SO:SOIC-20W_7.5x12.8mm_P1.27mm,"datasheet p.1 ordering: 74HC245D is SO20, p.3 pin configuration SO20 as the symbol"
+ADS1115IDGSR,footprint fits symbol,Package_SO:MSOP-10_3x3mm_P0.5mm,"datasheet p.29: IDGSR is VSSOP-10 (DGS), 3x3 mm, 0.5 mm pitch, which KiCad names both MSOP-10_3x3mm_P0.5mm and TSSOP-10_3x3mm_P0.5mm"
+BAT46W,footprint fits symbol,Diode_SMD:D_SOD-123,"datasheet p.1 and p.3: SOD-123 package; 2-pin symbol, 1 K, 2 A"
+BAT46WS,footprint fits symbol,Diode_SMD:D_SOD-323,"datasheet p.1 and p.3: SOD-323 package; 2-pin symbol, 1 K, 2 A"
+BAT54,footprint fits symbol,Package_TO_SOT_SMD:SOT-23,"datasheet p.1 SOT-23: 1 anode, 3 cathode, 2 unused, the pin order of the BAT54W symbol (made for SOT-323)"
+BAV21WS,footprint fits symbol,Diode_SMD:D_SOD-323,"datasheet p.1 and p.3: SOD-323 package; 2-pin symbol, 1 K, 2 A"
+BSS138W,footprint fits symbol,Package_TO_SOT_SMD:SOT-323_SC-70,"SOT-323 BSS138W on the SOT-23 BSS138 symbol (1 G, 2 S, 3 D); the datasheet p.1 numbers the SOT-323 pins without naming them"
+DRV8870DDAR,footprint fits symbol,Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.29x3mm,"datasheet p.25: DDA exposed pad 2.11-2.71 x 2.8-3.4 mm, which the 2.29x3 mm pad fits; the symbol default is TI's full land pattern"
+H11L1SR2M,footprint fits symbol,Package_DIP:SMDIP-6_W7.62mm,datasheet p.8 ordering: H11L1SR2M is the SMT 6-pin lead-bend form of the DIP-6
+ICPL-356-50CEAXW,footprint fits symbol,Package_SO:SO-4_4.4x3.9mm_P2.54mm,"datasheet p.3 pin table 1 anode, 2 cathode, 3 emitter, 4 collector; p.8 SOP4 4.4x3.9 mm body, 2.54 mm pitch"
+INA226AIDGSR,footprint fits symbol,Package_SO:MSOP-10_3x3mm_P0.5mm,"datasheet p.1 and p.3: DGS is VSSOP-10, 3x3 mm, 0.5 mm pitch, which KiCad names both MSOP-10_3x3mm_P0.5mm and TSSOP-10_3x3mm_P0.5mm"
+IS281B-N-AXW,footprint fits symbol,Package_SO:SSOP-4_4.4x2.6mm_P1.27mm,"datasheet p.3 pin table 1 anode, 2 cathode, 3 emitter, 4 collector; p.8 SSOP4 4.4x2.7 mm, 1.27 mm pitch"
+LM317AG-TN3-R,footprint fits symbol,Package_TO_SOT_SMD:TO-252-2,"datasheet p.1: TN3 is TO-252, 1 ADJ, 2 VOUT (tab), 3 VIN; the LM317_SOT-223 symbol has that pin order, and TO-252-2 numbers its tab 2"
+LNK304DN-TL,footprint fits symbol,Package_SO:PowerIntegrations_SO-8C,"datasheet p.3 and p.17: D package is SO-8C, pin 3 omitted; selection.csv pairing_note has the correction"
+LTV-217-B-G,footprint fits symbol,Package_SO:SOP-4_4.4x2.6mm_P1.27mm,"datasheet p.3 outline 4.4x2.6 mm, 1.27 mm pitch; pins 1 anode, 2 cathode, 3 emitter, 4 collector"
+MB10S-50MIL,footprint fits symbol,Package_TO_SOT_SMD:TO-269AA,"datasheet p.1 MBS: 1 +, 2 -, 3 and 4 AC; p.3 pad layout 2.40 mm pitch, 6.00 mm between rows: TO-269AA"
+S4B-ZR-SM4A-TF(LF)(SN),footprint fits symbol,Connector_JST:JST_ZH_S4B-ZR-SM4A-TF_1x04-1MP_P1.50mm_Horizontal,"a 4-way connector with two mounting pads (MP); generic 1x04 symbol, pins 1-4"
+S6B-ZR-SM4A-TF(LF)(SN),footprint fits symbol,Connector_JST:JST_ZH_S6B-ZR-SM4A-TF_1x06-1MP_P1.50mm_Horizontal,"a 6-way connector with two mounting pads (MP); generic 1x06 symbol, pins 1-6"
+SM04B-SRSS-TB(LF)(SN),footprint fits symbol,Connector_JST:JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal,"a 4-way connector with two mounting pads (MP); generic 1x04 symbol, pins 1-4"
+SM4007PL,footprint fits symbol,Diode_SMD:D_SOD-123F,"datasheet p.3: SOD-123FL package; 2-pin symbol, 1 K, 2 A"
+SMF12A,footprint fits symbol,Diode_SMD:D_SOD-123F,"datasheet p.2 package outline SOD-123FL (SMF series); 2-pin symbol, 1 K, 2 A"
+SMF15A,footprint fits symbol,Diode_SMD:D_SOD-123F,"datasheet p.2 package outline SOD-123FL (SMF series); 2-pin symbol, 1 K, 2 A"
+SMF24A,footprint fits symbol,Diode_SMD:D_SOD-123F,"datasheet p.2 package outline SOD-123FL (SMF series); 2-pin symbol, 1 K, 2 A"
+SS310B,footprint fits symbol,Diode_SMD:D_SMB,"datasheet p.1 and p.3: SMB package; 2-pin symbol, 1 K, 2 A"
+SS310C,footprint fits symbol,Diode_SMD:D_SMC,"datasheet p.1 and p.3: SMC package; 2-pin symbol, 1 K, 2 A"
+SS34B,footprint fits symbol,Diode_SMD:D_SMB,"datasheet p.1 and p.3: SMB package; 2-pin symbol, 1 K, 2 A"
+SS34C,footprint fits symbol,Diode_SMD:D_SMC,"datasheet p.1 and p.3: SMC package; 2-pin symbol, 1 K, 2 A"
+TLV9002IDDFR,footprint fits symbol,Package_TO_SOT_SMD:TSOT-23-8,"datasheet p.8 figure 6-6: D, DGK, PW and DDF (SOT-23-8) share the dual op-amp pinout 1 OUTA, 2 -INA, 3 +INA, 4 V-, 5 +INB, 6 -INB, 7 OUTB, 8 V+"
+TLV9152IDDFR,footprint fits symbol,Package_TO_SOT_SMD:TSOT-23-8,"datasheet p.6 figure 5-4: D, DDF (SOT-23-8), DGK and PW share the dual op-amp pinout 1 OUTA, 2 -INA, 3 +INA, 4 V-, 5 +INB, 6 -INB, 7 OUTB, 8 V+"
+TP4056-42-ESOP8,footprint fits symbol,Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.29x3mm,datasheet p.14 ESOP8 drawing: exposed pad 3.50 x 2.415 mm; the 2.29x3 mm pad sits inside it
+TP4057-42-SOT26-R,footprint fits symbol,Package_TO_SOT_SMD:SOT-23-6,"datasheet p.3 and p.10: SOT23-6 package, the pad layout of the TSOT-23-6 default"
+TPS26600PWPR,footprint fits symbol,Package_SO:HTSSOP-16-1EP_4.4x5mm_P0.65mm_EP3x3mm,"datasheet p.48: PWP thermal pad about 2.3x2.5 mm, inside the 3x3 mm pad"
+TPS5430DDAR,footprint fits symbol,Package_SO:SOIC-8-1EP_3.9x4.9mm_P1.27mm_EP2.29x3mm,"datasheet p.28: DDA exposed pad 2.0-2.6 x 2.5-3.1 mm, which the 2.29x3 mm pad fits"
+WSD30L90DN56,footprint fits symbol,Package_TO_SOT_SMD:TDSON-8-1,"datasheet p.1 DFN5X6-8: 1-3 S, 4 G, drain pad; AON6411 symbol (1-3 S, 4 G, 5 D) on TDSON-8-1, whose pad 5 is the drain pad; the datasheet has no outline drawing, so the land pattern is not checked against it"
+XC6206P332MR-G,footprint fits symbol,Package_TO_SOT_SMD:SOT-23,"datasheet p.2: MR-G is SOT-23, 1 VSS, 2 VOUT, 3 VIN; SOT-23 and SOT-23-3 are the same footprint"
+HP06W2F470JT5E,size code,0603 on Resistor_SMD:R_1206_3216Metric,datasheet p.1 dimension table: HP06 is 1206 (3.10 x 1.55 mm); the 06 is not a 0603 size code

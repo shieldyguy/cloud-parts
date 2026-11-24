@@ -1,0 +1,443 @@
+#!/usr/bin/env python3
+"""cloud-parts find, cloud-parts show — search the cloud-parts parameter table; show one part
+
+    cloud-parts find WORDS... [--json]   what do we have? every word somewhere in what is written about a part
+                               (MPN, manufacturer, kind, KiCad symbol and footprint, package, the short
+                               description built from its values, the values in the table), like grep
+    cloud-parts find KIND "CONDITION" [--sort EXPR [--desc]] [--json] [--why]   by values, a SQL condition over
+                               the kind's columns: mosfet "channel = 'p' and rds_on < 15m"; capacitor
+                               "capacitance = 100n and package = '0402'". A part lacking a value the
+                               condition reads is listed as may fit, never dropped. `cloud-parts find --help`
+                               is the whole syntax and every kind; `--help KIND` one kind's columns;
+                               `--table KIND` every part of a kind with every value
+    --why                      each value shown with its datasheet page and the condition it is specified at;
+                               a value not stated, with the reason. The pages are the datasheets' own, in
+                               the separate cloud-datasheets repository
+    --limit N                  print at most N parts (default 50; `--limit 0` for all). The count printed
+                               at the end is always the whole number that fit, limit or no limit
+    jlc, lcsc                  two more columns every kind has: whether JLCPCB's assembly service offers
+                               the part (`jlc = 'basic'`, 'preferred', 'extended', or empty for none;
+                               `jlc != ''` is any JLC part) and its LCSC catalogue number. A frozen
+                               snapshot, not live data, and results put a JLC basic part first
+    price                      one more column every kind has: USD per piece when buying 100, from a frozen
+                               price snapshot (JLCPCB's catalogue for a part with an LCSC number, Mouser
+                               for the rest; prices.csv gives each day). `price < 0.01`, `--sort price`.
+                               find prints it with its break when the condition reads it (0.0017USD@100;
+                               0.526USD@2000+ when the seller sells no fewer; 23.3696USD@1 gone for a part
+                               JLCPCB no longer lists; ~0.0023USD@100 for a part no seller quoted, which has
+                               a close relative's price). Roughly right, not exact. No stock
+    cloud-parts show MPN [--json]    one part (its part number as printed by find, any case;
+                               / and space may be written _): kind, manufacturer, every field with its page and condition (or why it
+                               is not stated), its snapshot price (or that it has none), and the paths
+                               of its datasheet, KiCad symbol, footprint and 3D model in this repository.
+                               Where the separate cloud-sheets repository is beside this one (or at
+                               $CLOUD_SHEETS), also the part's reference sheet: its data file (JSON, the
+                               sheet itself)
+    cloud-parts sheet MPN...   the part's reference sheet as a page to read: one HTML file with its tables,
+                               graphs and drawings, written now from the data file (needs cloud-sheets);
+                               prints the page's path
+
+Both take --json; tests/test_find_cli.py lists every key. Paths printed are relative to
+the repository root ($CLOUD_PARTS). The search is lib/parts_params.py over table/, through
+lib/cloud_parts.py; Python 3.8+, standard library only.
+"""
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "lib"))
+import cloud_parts as E  # noqa: E402
+
+PP = E.PP
+
+
+def _why_lines(d, fields, indent="      "):
+    out = []
+    for f in fields:
+        w = E.why(d, f)
+        if not w:
+            continue
+        if "null_reason" in w and w.get("value") is None:
+            out.append("%s%s: not stated: %s" % (indent, f, w["null_reason"]))
+        else:
+            out.append("%s%s: p.%s  %s" % (indent, f, w.get("page", "?"), w.get("condition", "")))
+    return out
+
+
+def _not_stated_map(d, kind, unknown):
+    """{field: the table's reason it is empty}, for the columns a condition reads."""
+    out = {}
+    for c in unknown:
+        if c == "price":                        # the price snapshot's, not the datasheet's
+            out["price"] = E.price_reason(d)
+            continue
+        f = next((ff for cc, ff, _r, _s in PP.columns(kind) if cc == c), c)
+        if f not in out:
+            out[f] = (E.why(d, f) or {}).get("null_reason") or "not in the table"
+    return out
+
+
+def _not_stated(d, kind, unknown):
+    """The same, one line per field, for the text output."""
+    return ["%s: %s" % kv for kv in _not_stated_map(d, kind, unknown).items()]
+
+
+# The --json shapes (tests/test_find_cli.py pins the keys).
+PART_KEYS = ["mpn", "kind", "manufacturer", "package", "footprint", "symbol", "datasheet", "description",
+             "jlc", "lcsc", "price", "params"]
+FIT_KEYS = ["fits", "sort_key", "values", "not_stated"]
+
+
+def _json_part(rw):
+    out = {"mpn": rw["mpn"], "kind": rw["kind"], "manufacturer": rw["manufacturer"], "package": rw["package"],
+           "footprint": rw["footprint"], "symbol": rw["symbol"], "datasheet": rw["datasheet"],
+           "description": rw["description"], "jlc": rw["jlc"], "lcsc": rw["lcsc"],
+           "price": rw["price"], "params": rw["params"]}
+    if "fits" in rw:
+        out.update({"fits": rw["fits"], "sort_key": rw["sort_key"], "values": rw["values"],
+                    "not_stated": rw.get("not_stated", {})})
+        if "why" in rw:
+            out["why"] = rw["why"]
+    return out
+
+
+DEFAULT_LIMIT = 50
+JLC_TAG = {"basic": "basic", "preferred": "pref", "extended": "ext"}
+
+
+def _tag(rw):
+    """The part's JLC class as a short column: a basic part needs no loading fee."""
+    return JLC_TAG.get(rw.get("jlc") or "", "-")
+
+
+def _shown(rows, limit):
+    """The rows to print, and how many were held back."""
+    return (rows, 0) if not limit or len(rows) <= limit else (rows[:limit], len(rows) - limit)
+
+
+def _more(held, limit):
+    """What to say when a limit held rows back, so the count is never silent."""
+    return "" if not held else ("; showing the first %d, %d more (--limit N, --limit 0 for all)"
+                                % (limit, held))
+
+
+def cmd_find(words, as_json=False, sort=None, desc=False, table=None, show_why=False,
+             limit=DEFAULT_LIMIT):
+    """Search the table (lib/parts_params.py; `cloud-parts find --help`).
+    `cloud-parts find WORDS` is a word search over everything written about a
+    part; `cloud-parts find KIND "CONDITION"` a parametric one, where a part
+    with a value not stated is listed as may fit, never dropped."""
+    if table:
+        ks = PP.kind_words(table)
+        if not ks:
+            sys.exit("cloud-parts find --table: no kind %r (cloud-parts find --help)" % table)
+        ps = E.parts(ks)                        # the named kinds' tables, and no others
+        for k in ks:
+            for row in PP.table_rows(ps, k):
+                print("\t".join(row if len(ks) > 1 else row[1:]))
+        return 0
+    if not words:
+        sys.exit(PP.SYNTAX)
+    parts = E.parts(PP.query_kinds(words))      # a parametric search reads its kinds' tables alone
+    try:
+        r = PP.find(parts, words, sort=sort, desc=desc)
+    except PP.QueryError as exc:
+        if as_json:
+            print(json.dumps({"error": str(exc)}, ensure_ascii=False))
+        else:
+            print("cloud-parts find: %s" % exc, file=sys.stderr)
+        return 2
+
+    def base(folder, d):
+        p = d.get("params") or {}
+        ev = d.get("_table") or {}
+        return {"part": os.path.basename(folder), "mpn": d.get("mpn"),
+                "kind": p.get("kind"), "package": d.get("jlc_package"), "footprint": d.get("package"),
+                "manufacturer": d.get("manufacturer"), "description": d.get("description"),
+                "jlc": d.get("jlc"), "lcsc": d.get("lcsc"), "price": d.get("price_quote"),
+                "params": p, "folder": folder, "symbol": ev.get("symbol"), "datasheet": ev.get("datasheet")}
+
+    if r["mode"] == "words":
+        rows = [base(f, d) for f, d in r["results"]]
+        keep, held = _shown(rows, limit)
+        if as_json:
+            print(json.dumps({"mode": "words", "words": words, "total": len(rows), "shown": len(keep),
+                              "results": [_json_part(rw) for rw in keep]},
+                             indent=1, ensure_ascii=False))
+            return 0 if rows else 1
+        for rw in keep:
+            print("  %-22s  %-14s %-5s %-16s %s" % (rw["mpn"], rw["package"] or "?", _tag(rw),
+                                             rw["kind"] or "(no params)",
+                                             (rw["description"] or rw["symbol"] or "")[:50]))
+        if rows:
+            print("%d part(s) hold every word%s" % (len(rows), _more(held, limit)))
+            return 0
+        print("no part holds every one of: %s" % " ".join(words))
+        print("  parts holding each word: %s" % ", ".join("%s %d" % kv for kv in r["counts"].items()))
+        print("  fewer words find more; a function word (logic level, audio) may be written nowhere:"
+              " say it in columns, `cloud-parts find --help`")
+        return 1
+
+    refs = [c for c in r["refs"] if c not in [m[0] for m in PP.META]]
+    rows = []
+    for kind, folder, d, fits, key, _rws, unknown in r["results"]:
+        rw = base(folder, d)
+        fs = PP.fields_of(kind)
+        shown_fields = []
+        for c in refs:
+            f = next((ff for cc, ff, _r, _s in PP.columns(kind) if cc == c), None)
+            if f and f not in shown_fields:
+                shown_fields.append(f)
+        rw.update({"fits": fits, "sort_key": key,
+                   "values": {f: PP.show(fs[f], rw["params"][f]) for f in shown_fields if f in rw["params"]}})
+        if "price" in r["refs"] and d.get("price_quote"):
+            rw["values"]["price"] = E.price_short(d["price_quote"])
+        if fits == "maybe":
+            rw["not_filed"] = unknown
+            rw["spec_lines"] = _not_stated(d, kind, unknown)
+            rw["not_stated"] = _not_stated_map(d, kind, unknown)
+        if show_why:
+            rw["why"] = {f: E.why(d, f) for f in shown_fields + (["price"] if "price" in r["refs"] else [])
+                         if E.why(d, f)}
+        rw["_d"], rw["_fields"] = d, shown_fields
+        rows.append(rw)
+    if as_json:
+        keep, _held = _shown(rows, limit)
+        print(json.dumps({"mode": "condition", "kinds": r["kinds"], "condition": r["condition"],
+                          "total": len(rows), "shown": len(keep),
+                          "results": [_json_part(rw) for rw in keep], "skipped_kinds": r["skipped"]},
+                         indent=1, ensure_ascii=False))
+        return 0 if rows else 1
+    yes = [rw for rw in rows if rw["fits"] == "yes"]
+    maybe = [rw for rw in rows if rw["fits"] == "maybe"]
+    yes_keep, yes_held = _shown(yes, limit)
+    maybe_keep, maybe_held = _shown(maybe, limit)
+    for rw in yes_keep:
+        vals = "  ".join("%s=%s" % kv for kv in rw["values"].items())
+        print("  %-22s  %-14s %-5s %s" % (rw["mpn"], rw["package"] or "?", _tag(rw),
+                                          vals or (rw["description"] or "")[:60]))
+        if show_why:
+            print("\n".join(_why_lines(rw["_d"], rw["_fields"])))
+    if maybe:
+        many = len(maybe_keep) > 12
+        print("  may fit (a column the condition reads is not stated for these%s):"
+              % ("; --json has each one's reasons" if many else "; read the lines below"))
+        for rw in maybe_keep:
+            vals = "  ".join("%s=%s" % kv for kv in rw["values"].items())
+            print("  %-22s  %-14s %-5s %s  ? not filed: %s" % (rw["mpn"], rw["package"] or "?", _tag(rw),
+                                                         vals, ", ".join(rw["not_filed"])))
+            if show_why:
+                print("\n".join(_why_lines(rw["_d"], rw["_fields"])))
+            elif many:
+                if rw["spec_lines"]:
+                    print("      table %s" % rw["spec_lines"][0])
+                continue
+            else:
+                print("      description: %s" % (rw["description"] or "-"))
+                for line in rw["spec_lines"][:4]:
+                    print("      table %s" % line)
+            if rw["datasheet"]:
+                print("      datasheet: %s" % rw["datasheet"])
+    for k, why in r["skipped"].items():
+        print("  (%s not searched: %s)" % (k, why.split(". Its columns")[0]))
+    if yes:
+        print("%d part(s) fit%s%s" % (len(yes), ", %d may fit" % len(maybe) if maybe else "",
+                                      _more(yes_held or maybe_held, limit)))
+        return 0
+    print("nothing of kind %s fits%s: %s" % ("/".join(r["kinds"]), " for certain" if maybe else "", r["condition"]))
+    for k in r["kinds"]:
+        if k in r["skipped"]:
+            continue
+        for c, (n, tot, summ) in PP.known(parts, k, r["refs"]).items():
+            print("  %s %s: filed on %d of %d parts; %s" % (k, c, n, tot, summ))
+    print("  a value only written in words: add `or text like '%...%'`, or `cloud-parts find WORDS`")
+    if maybe:
+        print("%d may fit (above)" % len(maybe))
+        return 0
+    return 1
+
+
+def _sel_rows():
+    import csv
+    with open(E.SELECTION, encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def _here(path):
+    """(absolute path, exists) for a repository-relative path."""
+    if not path:
+        return None, False
+    full = os.path.join(E.REPO, path)
+    return full, os.path.exists(full)
+
+
+def part_files(sel):
+    """The repository files of one selection row: datasheet, symbol library, footprint, model."""
+    lib, _, name = (sel.get("kicad_symbol") or "").partition(":")
+    flib, _, fname = (sel.get("footprint") or "").partition(":")
+    return {
+        "datasheet": sel.get("datasheet_path") or None,
+        "symbol_file": "kicad/symbols/%s.kicad_sym" % lib if lib else None,
+        "footprint_file": "kicad/footprints/%s.pretty/%s.kicad_mod" % (flib, fname) if flib else None,
+        "model_file": sel.get("model_path") or None,
+    }
+
+
+def _named(mpns, rows):
+    """[(the name as given, its selection row or None)]: the part number, in any case, or its file-safe form
+    (/ and space as _) when that names one part."""
+    by = {r["mpn"]: r for r in rows}
+    alt = {}
+    for r in rows:
+        for k in {r["mpn"].lower(), E.folder_name(r["mpn"]).lower()}:
+            alt.setdefault(k, []).append(r)
+    named = []
+    for m in mpns:
+        sel = by.get(m)
+        if not sel:
+            hits = {id(r): r for r in alt.get(m.lower(), [])}
+            sel = next(iter(hits.values())) if len(hits) == 1 else None
+        named.append((m, sel))
+    return named
+
+
+def cmd_sheet(mpns):
+    """Each named part's reference sheet as a page (HTML), written now from its data file: one path a line."""
+    if not mpns:
+        sys.exit("cloud-parts sheet MPN [MPN ...]")
+    code = 0
+    for m, sel in _named(mpns, _sel_rows()):
+        sh = E.find_sheet(sel["mpn"], sel.get("datasheet_path")) if sel else None
+        if not sh:
+            code = 1
+            print("%s: %s" % (m, "not a part of this library" if not sel else
+                              "no sheet (the %s repository is not beside this one or at $CLOUD_SHEETS, "
+                              "or has none for this part)" % E.SHEETS_REPO), file=sys.stderr)
+            continue
+        print(E.render_sheet(sh))
+    return code
+
+
+def cmd_show(mpns, as_json=False):
+    """Everything about named parts: values with page and condition, and every file."""
+    if not mpns:
+        sys.exit("cloud-parts show MPN [MPN ...] [--json]")
+    rows = _sel_rows()
+    named = _named(mpns, rows)
+    # only the named parts' own kinds are read: show is asked for a part, never for a table
+    table = {d["mpn"]: d for _f, d in E.parts(sorted({s["kind"] for _m, s in named if s}))}
+    out, missing = [], []
+    for m, sel in named:
+        if not sel:
+            near = sorted(r["mpn"] for r in rows if r["mpn"].lower().startswith(m.lower()[:4]))[:8]
+            missing.append((m, near))
+            continue
+        d = table.get(sel["mpn"]) or {}
+        kind = sel["kind"]
+        fields = []
+        for f, spec in PP.fields_of(kind).items():
+            w = E.why(d, f) or {}
+            v = w.get("value")
+            fields.append({"field": f, "value": v, "shown": PP.show(spec, v) if v is not None else None,
+                           "page": w.get("page"), "condition": w.get("condition"),
+                           "null_reason": w.get("null_reason") if v is None else None})
+        files = part_files(sel)
+        filed = {k: {"path": p, "present": _here(p)[1]} for k, p in files.items()}
+        ds = E.find_datasheet(files["datasheet"])
+        filed["datasheet"] = {"path": ds or files["datasheet"], "present": bool(ds)}
+        rec = {"mpn": sel["mpn"], "manufacturer": sel["manufacturer"], "kind": kind,
+               "series": sel.get("series_id") or None, "unit": sel.get("unit") or None,
+               "kicad_symbol": sel.get("kicad_symbol"), "footprint": sel.get("footprint"),
+               "jlc": sel.get("jlc") or None, "lcsc": sel.get("lcsc") or None,
+               "price": E.price_of(sel["mpn"]),
+               "files": filed,
+               "datasheet_sha256": sel.get("sha256"),
+               "datasheet_revision": sel.get("revision_or_date"),
+               "datasheet_pages": int(sel["pages"]) if (sel.get("pages") or "").isdigit() else None,
+               "datasheet_present": bool(ds),
+               "sheet": E.find_sheet(sel["mpn"], files["datasheet"]),
+               "fields": fields}
+        out.append(rec)
+    if as_json:
+        print(json.dumps({"parts": out, "not_found": [m for m, _ in missing]}, indent=1, ensure_ascii=False))
+    else:
+        for rec in out:
+            print("%s  %s  (%s)" % (rec["mpn"], rec["manufacturer"], rec["kind"]))
+            if rec["unit"]:
+                print("  series unit    %s" % rec["unit"])
+            print("  KiCad symbol   %s" % rec["kicad_symbol"])
+            print("  footprint      %s" % rec["footprint"])
+            print("  JLCPCB         %s" % (
+                "%s library%s" % (rec["jlc"], ", LCSC %s" % rec["lcsc"] if rec["lcsc"] else "")
+                if rec["jlc"] else "not offered by JLCPCB assembly in the snapshot"))
+            print("  price          %s" % (E.price_text(rec["price"]) or (
+                "none: %s" % E.price_reason({"lcsc": rec["lcsc"]}))))
+            for k, label in (("datasheet", "datasheet"), ("symbol_file", "symbol file"),
+                             ("footprint_file", "footprint file"), ("model_file", "3D model")):
+                fi = rec["files"][k]
+                print("  %-14s %s%s" % (label, fi["path"] or "-",
+                                         "" if fi["present"] or not fi["path"] else "  (not present)"))
+                if k == "datasheet" and fi["path"] and not fi["present"]:
+                    print("  %-14s the PDF is in the separate %s repository: place it beside this one, or set "
+                          "CLOUD_DATASHEETS" % ("", E.DATASHEETS_REPO))
+            print("  revision       %s; %s pages; sha256 %s" % (rec["datasheet_revision"] or "-",
+                                                             rec["datasheet_pages"] or "?",
+                                                             (rec["datasheet_sha256"] or "-")[:16]))
+            sh = rec["sheet"]
+            if sh:                                  # the cloud-sheets repository is beside this one, or at $CLOUD_SHEETS
+                print("  sheet          %s  (%s tables, %s curves, %d circuits)" % (
+                    sh["path"], sh["tables"] if sh["tables"] is not None else "?",
+                    sh["curves"] if sh["curves"] is not None else "?", len(sh["circuits"])))
+                print("  sheet as page  cloud-parts sheet %s" % rec["mpn"])
+            for f in rec["fields"]:
+                if f["value"] is not None:
+                    print("    %-18s %-24s p.%s  %s" % (f["field"], f["shown"], f["page"], f["condition"] or ""))
+                else:
+                    print("    %-18s %-24s %s" % (f["field"], "-", f["null_reason"] or "not in the table"))
+            print()
+        for m, near in missing:
+            print("cloud-parts show: no part %s%s" % (m, ("; near: " + ", ".join(near)) if near else ""))
+    return 0 if not missing else 1
+
+
+def main(args):
+    if not args or args[0] in ("-h", "--help"):
+        print(__doc__)
+        return 0
+    if args[0] == "show":
+        return cmd_show([a for a in args[1:] if a != "--json"], as_json="--json" in args)
+    if args[0] == "sheet":
+        return cmd_sheet(args[1:])
+    if args[0] != "find":
+        sys.exit("cloud-parts %s: the commands are `cloud-parts find`, `cloud-parts show` and `cloud-parts sheet` "
+                 "(cloud-parts --help)" % args[0])
+    if "--help" in args or "--fields" in args:
+        rest = [a for a in args[1:] if a not in ("--help", "--fields")]
+        try:
+            print(PP.help(rest[0] if rest else None,
+                          E.parts(PP.kind_words(rest[0])) if rest else None), end="")
+        except PP.QueryError as exc:
+            sys.exit(str(exc))
+        return 0
+    rest, opts, it = [], {}, iter(args[1:])
+    for a in it:
+        if a in ("--sort", "--table", "--limit"):
+            opts[a] = next(it, None)
+            if opts[a] is None:
+                sys.exit("cloud-parts find %s needs a value" % a)
+        elif a in ("--json", "--desc", "--why"):
+            opts[a] = True
+        else:
+            rest.append(a)
+    limit = DEFAULT_LIMIT
+    if opts.get("--limit") is not None:
+        if not str(opts["--limit"]).lstrip("-").isdigit() or int(opts["--limit"]) < 0:
+            sys.exit("cloud-parts find --limit: a whole number of parts, or 0 for all")
+        limit = int(opts["--limit"])
+    return cmd_find(rest, as_json=opts.get("--json", False), sort=opts.get("--sort"),
+                    desc=opts.get("--desc", False), table=opts.get("--table"),
+                    show_why=opts.get("--why", False), limit=limit)
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

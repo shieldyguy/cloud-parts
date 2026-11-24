@@ -1,0 +1,6 @@
+__pycache__/
+.pytest_cache/
+# the datasheets are the separate cloud-datasheets repository; a copy dropped in here is not committed
+datasheets/
+# written by install.sh
+env.sh

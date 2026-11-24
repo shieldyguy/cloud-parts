@@ -1,0 +1,18 @@
+{
+ "about": "The KiCad library commits kicad/ was built from: the symbols, footprints and STEP models in kicad/ are these commits' files, so a part's KiCad reference can be traced back to KiCad's own library. kicad-packages3D is the newest commit at or before the symbol and footprint commits (master, 2026-11-03).",
+ "libraries": {
+  "kicad-symbols": {
+   "url": "https://gitlab.com/kicad/libraries/kicad-symbols.git",
+   "commit": "9fa442824ffd3786b0c420b5d7e45f9a461b7c72"
+  },
+  "kicad-footprints": {
+   "url": "https://gitlab.com/kicad/libraries/kicad-footprints.git",
+   "commit": "a0dcd398e7ea4b00cdeb91efc35f09cceaa9097d"
+  },
+  "kicad-packages3D": {
+   "url": "https://gitlab.com/kicad/libraries/kicad-packages3D.git",
+   "commit": "afa6aab16f43a736cd062b8c853863e753653921",
+   "sparse": true
+  }
+ }
+}
