@@ -1,4 +1,4 @@
-"""Datasheets live in the separate cloud-datasheets repository and are optional here. These tests use a
+"""The datasheet PDFs are not kept in this repository and are optional. These tests use a
 temporary folder and one tiny fake PDF, never the real set, so they pass with or without it."""
 import hashlib
 import os

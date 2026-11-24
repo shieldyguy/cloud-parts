@@ -4,8 +4,6 @@
 #                                 sheets' pages, self-check
 #   ./install.sh --check          the self-check table only
 #   ./install.sh --no-kicad       as the first, but leave any KiCad configuration alone
-#   ./install.sh --require-datasheets   fail when the datasheet PDFs (a cloud-datasheets folder beside
-#                                 this one, or at CLOUD_DATASHEETS) are not found
 # The reference sheets are a separate repository, cloud-sheets: place it beside this folder (or set
 # CLOUD_SHEETS) before installing. install.sh writes each sheet as an HTML page beside its data file,
 # and cloud-sheets/index.html, which lists them (a few seconds; run again after the sheets change).
@@ -20,8 +18,8 @@ for a in "$@"; do
     --check) CHECK_ONLY=1 ;;
     --no-kicad) KICAD=0 ;;
     --require-datasheets) REQ="--require-datasheets" ;;
-    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
-    *) echo "install.sh: unknown option $a (--check, --no-kicad, --require-datasheets)"; exit 2 ;;
+    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    *) echo "install.sh: unknown option $a (--check, --no-kicad)"; exit 2 ;;
   esac
 done
 

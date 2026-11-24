@@ -1,10 +1,9 @@
 """The install self-check: is everything an offline agent needs here, and does the search run?
 
-    python3 scripts/check_install.py [--require-datasheets]
+    python3 scripts/check_install.py
 
-Prints one table: parts, table rows, datasheets (optional: they live in the separate
-cloud-datasheets repository; found under $CLOUD_DATASHEETS, ../cloud-datasheets or ./datasheets;
-each one's sha256 checked against selection.csv; --require-datasheets makes their absence a failure),
+Prints one table: parts, table rows, the datasheet PDFs where a set is installed (each one's sha256
+checked against selection.csv), the reference sheets and their pages,
 the price snapshot (prices.csv: a row naming a part not in the library is an error),
 symbols resolving, footprints resolving, the four symbol/footprint checks of lib/kicad_pins.py,
 models present, the KiCad library tables, and
@@ -149,8 +148,7 @@ def main(argv):
     if len(missing) == n:
         if require:             # the PDFs are optional: with none installed and none required, no row
             line("datasheets present", 0, n, ok="MISSING")
-            problems.append("no datasheets found (--require-datasheets): place cloud-datasheets beside this "
-                            "folder or set CLOUD_DATASHEETS")
+            problems.append("no datasheets found (--require-datasheets)")
     elif missing:
         line("datasheets present", len(good), n, ok="MISSING" if require else "partial",
              note="%s; %d not present (optional)" % (how, len(missing)))

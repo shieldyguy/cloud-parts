@@ -39,12 +39,9 @@ page. Each part of a page has an id, to link to or lift out:
 - `bin/cloud-parts`, `lib/` the search tool and its Python module
 - `scripts/`, `tests/` the install check and the tests (pytest)
 
-## Sibling repositories
+## Sibling repository
 
-Placed beside this folder, or named by the variable:
-
-- `cloud-sheets` (`$CLOUD_SHEETS`) each datasheet as a data file and a page, with drawn circuits
-- `cloud-datasheets` (`$CLOUD_DATASHEETS`, optional) the datasheet PDFs the page numbers refer to
+- `cloud-sheets`, beside this folder or at `$CLOUD_SHEETS`: each datasheet as a data file and a page, with drawn circuits
 
 ## Licence
 

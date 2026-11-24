@@ -23,8 +23,7 @@ not exact. The searchable `price` is that unit price.
 
 Each value's page and condition stay in table/<kind>.jsonl and are carried
 beside the part as `_table` (shown by `cloud-parts find --why`). The page
-is the datasheet's own page: the PDFs are the separate cloud-datasheets
-repository, and that is where the cited pages are. A field
+is the maker's datasheet's own page; the PDFs are not kept here. A field
 whose value is null is left out of params, so the search treats it as not filed:
 unknown, and a part whose condition reads it is kept as "may fit"; its
 null_reason is what `--why` and the may-fit lines show.
@@ -67,10 +66,9 @@ PRICE_BASES = ("at_100", "min_order_above_100", "one_piece_last_seen", "family")
 
 
 # -- where the datasheets are -------------------------------------------------
-# The PDFs live in the separate cloud-datasheets repository. A datasheet_path
-# from selection.csv (datasheets/<kind>/<file>.pdf) is looked for, in order,
-# under $CLOUD_DATASHEETS, under a sibling folder ../cloud-datasheets, and
-# under this repository (a user may drop them in here).
+# The PDFs are not kept here. Where a set is installed, a datasheet_path from
+# selection.csv (datasheets/<kind>/<file>.pdf) is looked for under the folders
+# of datasheet_roots(), in order.
 
 DATASHEETS_REPO = "cloud-datasheets"
 
@@ -426,8 +424,7 @@ def parts(kinds=None):
 
 def why(d, field):
     """A field's cell: {value, page, condition} or {null_reason}. The
-    page is the datasheet's own, in the separate cloud-datasheets repository;
-    the datasheet's text is not kept here."""
+    page is the maker's datasheet's own; the datasheet's text is not kept here."""
     if field == "price":                        # not a datasheet value: the price snapshot's
         if d.get("price") is not None:
             return {"value": d["price"], "page": None, "condition": price_text(d.get("price_quote"))}
