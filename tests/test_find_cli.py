@@ -118,7 +118,7 @@ def test_json_shapes_are_pinned():
                        "jlc", "lcsc", "price", "files",
                        "datasheet_sha256", "datasheet_revision", "datasheet_pages", "datasheet_present",
                        "sheet", "fields"]
-    assert p["sheet"] is None or list(p["sheet"]) == ["path", "render", "tables", "curves", "circuits"]
+    assert p["sheet"] is None or list(p["sheet"]) == ["path", "page", "render", "tables", "curves", "circuits"]
     assert list(p["files"]) == ["datasheet", "symbol_file", "footprint_file", "model_file"]
     assert all(list(v) == ["path", "present"] for v in p["files"].values())
     assert isinstance(p["datasheet_pages"], int) and isinstance(p["datasheet_present"], bool)

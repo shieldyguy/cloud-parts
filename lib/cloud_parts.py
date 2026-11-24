@@ -138,7 +138,7 @@ def render_sheet(sheet):
     """Write a found sheet (find_sheet's result) as a page with cloud-sheets' own render.py; the page's path.
 
     The page is one self-contained HTML file beside the sheet's data file; writing it takes a moment and needs
-    nothing but Python, so it is written afresh each time."""
+    nothing but Python, so it is written afresh each time. install.sh writes every sheet's (`render.py all`)."""
     import subprocess
     script = sheet["render"].split(" ")[1]
     subprocess.run([sys.executable, script, sheet["path"]], check=True, stdout=subprocess.DEVNULL)
@@ -149,7 +149,8 @@ def find_sheet(mpn, datasheet_rel=None, env=None, repo=None):
     """The reference sheet of part `mpn` where the cloud-sheets repository is, or None.
 
     Found by the part number in the sheets' index, else by the datasheet's file name (a sheet is named after its
-    datasheet). Returns the sheet's data file, the command that writes it as a page (HTML), its counts and its
+    datasheet). Returns the sheet's data file, its page (HTML; None until install.sh or `cloud-parts sheet` has
+    written it, or when the sheet has changed since), the command that writes the page, its counts and its
     circuits."""
     stem = os.path.splitext(os.path.basename(datasheet_rel))[0] if datasheet_rel else None
     for root in sheets_roots(env, repo):
@@ -161,8 +162,13 @@ def find_sheet(mpn, datasheet_rel=None, env=None, repo=None):
         if not os.path.isfile(sheet):
             continue
         num = lambda k: int(r[k]) if (r.get(k) or "").isdigit() else None
+        script = os.path.join(os.path.abspath(root), "render.py")
+        page = os.path.splitext(sheet)[0] + ".html"
+        made = os.path.isfile(page) and os.path.getmtime(page) >= max(
+            os.path.getmtime(p) for p in (sheet, script) if os.path.isfile(p))
         return {"path": sheet,
-                "render": "python3 %s %s" % (os.path.join(os.path.abspath(root), "render.py"), sheet),
+                "page": page if made else None,
+                "render": "python3 %s %s" % (script, sheet),
                 "tables": num("tables"), "curves": num("curves"),
                 "circuits": (r.get("circuits") or "").split()}
     return None

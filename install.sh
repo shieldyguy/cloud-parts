@@ -1,9 +1,13 @@
 #!/bin/sh
 # cloud-parts install: offline, nothing downloaded, nothing installed with pip.
-#   ./install.sh                  write env.sh, register the KiCad libraries if KiCad is here, self-check
+#   ./install.sh                  write env.sh, register the KiCad libraries if KiCad is here, write the
+#                                 sheets' pages, self-check
 #   ./install.sh --check          the self-check table only
 #   ./install.sh --no-kicad       as the first, but leave any KiCad configuration alone
 #   ./install.sh --require-datasheets   fail when the datasheets (cloud-datasheets) are not found
+# The reference sheets are a separate repository, cloud-sheets: place it beside this folder (or set
+# CLOUD_SHEETS) before installing. install.sh writes each sheet as an HTML page beside its data file,
+# and cloud-sheets/index.html, which lists them (a few seconds; run again after the sheets change).
 # The datasheet PDFs are a separate repository, cloud-datasheets: place it beside this folder
 # (or set CLOUD_DATASHEETS) and run install.sh again.
 # Then: . ./env.sh   (puts `cloud-parts` on PATH and sets CLOUD_PARTS). Safe to run again.
@@ -17,7 +21,7 @@ for a in "$@"; do
     --check) CHECK_ONLY=1 ;;
     --no-kicad) KICAD=0 ;;
     --require-datasheets) REQ="--require-datasheets" ;;
-    -h|--help) sed -n '2,9p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
     *) echo "install.sh: unknown option $a (--check, --no-kicad, --require-datasheets)"; exit 2 ;;
   esac
 done
@@ -43,6 +47,12 @@ if [ -n "${CLOUD_DATASHEETS:-}" ] && [ -d "$CLOUD_DATASHEETS/datasheets" ]; then
 elif [ -d "$ROOT/../cloud-datasheets/datasheets" ]; then
   DS=$(cd "$ROOT/../cloud-datasheets" && pwd -P)
 fi
+SH=""
+if [ -n "${CLOUD_SHEETS:-}" ] && [ -f "$CLOUD_SHEETS/render.py" ]; then
+  SH=$(cd "$CLOUD_SHEETS" && pwd -P)
+elif [ -f "$ROOT/../cloud-sheets/render.py" ]; then
+  SH=$(cd "$ROOT/../cloud-sheets" && pwd -P)
+fi
 cat > "$ROOT/env.sh" <<EOF
 # cloud-parts: source this file (. $ROOT/env.sh)
 export CLOUD_PARTS="$ROOT"
@@ -53,6 +63,9 @@ esac
 EOF
 if [ -n "$DS" ]; then
   echo "export CLOUD_DATASHEETS=\"$DS\"" >> "$ROOT/env.sh"
+fi
+if [ -n "$SH" ]; then
+  echo "export CLOUD_SHEETS=\"$SH\"" >> "$ROOT/env.sh"
 fi
 echo "cloud-parts at $ROOT"
 if [ -n "$DS" ]; then
@@ -65,8 +78,18 @@ if [ "$KICAD" = 1 ]; then
   "$PY" "$ROOT/scripts/kicad_config.py" "$ROOT" || echo "  KiCad: configuration not changed (see above)"
 fi
 
+if [ -n "$SH" ]; then
+  if "$PY" "$SH/render.py" all > /dev/null 2>&1; then
+    echo "  sheets: each one written as a page (HTML) beside its data file; $SH/index.html lists them"
+  else
+    echo "  sheets: the pages could not be written in $SH (try: python3 $SH/render.py all)"
+  fi
+else
+  echo "  sheets: place the cloud-sheets repository beside this folder and run install.sh again"
+fi
+
 echo
-CLOUD_DATASHEETS="$DS" "$PY" "$ROOT/scripts/check_install.py" $REQ
+CLOUD_DATASHEETS="$DS" CLOUD_SHEETS="$SH" "$PY" "$ROOT/scripts/check_install.py" $REQ
 status=$?
 echo
 if [ $status -eq 0 ]; then

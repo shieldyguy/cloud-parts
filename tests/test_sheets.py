@@ -1,5 +1,6 @@
 """Reference sheets live in the separate cloud-sheets repository and are optional here. These tests use a
-temporary folder and one tiny fake sheet, never the real set, so they pass with or without it."""
+temporary folder and one tiny fake sheet, so they pass with or without the real set; the last copies one real
+sheet and the real render.py there when cloud-sheets is beside this repository."""
 import json
 import os
 import shutil
@@ -37,8 +38,9 @@ def test_found_beside_or_through_the_variable():
     for i, where in enumerate(("sibling", "env")):
         repo, env = layout(os.path.join(TMP[0], str(i)), where)
         s = cloud_parts.find_sheet("FAKE-2", env=env, repo=repo)
-        assert list(s) == ["path", "render", "tables", "curves", "circuits"], where
+        assert list(s) == ["path", "page", "render", "tables", "curves", "circuits"], where
         assert s["path"].endswith(os.path.join("test_kind", "FAKE-1.json")) and os.path.isabs(s["path"])
+        assert s["page"] is None                 # no page until one is written
         assert (s["tables"], s["curves"]) == (3, 2)
         assert s["circuits"] == ["astable", "monostable"]
 
@@ -53,6 +55,49 @@ def test_the_page_is_written_on_retrieval():
     assert s["render"].endswith("FAKE-1.json") and os.path.join("cloud-sheets", "render.py") in s["render"]
     page = cloud_parts.render_sheet(s)
     assert page == s["path"][:-5] + ".html" and open(page).read() == "<p>page</p>"
+    # a written page is the sheet's page, until the sheet changes after it
+    assert cloud_parts.find_sheet("FAKE-1", env=env, repo=repo)["page"] == page
+    later = os.path.getmtime(page) + 10
+    os.utime(s["path"], (later, later))
+    assert cloud_parts.find_sheet("FAKE-1", env=env, repo=repo)["page"] is None
+
+
+def test_install_writes_every_page_and_show_names_it():
+    """install.sh runs cloud-sheets' render.py over every sheet; show then prints the page's path."""
+    import glob
+    import re
+    real = os.path.join(os.path.dirname(REPO), cloud_parts.SHEETS_REPO)
+    if not os.path.isfile(os.path.join(real, "datasheets", "ldo", "LM317DCYR.json")):
+        return                                   # the sheet library is not beside this one
+    with open(os.path.join(REPO, "install.sh"), encoding="utf-8") as f:
+        assert '"$SH/render.py" all' in f.read()
+    # a copy of one real sheet with the real render.py: the real library is not written to
+    sheets = os.path.join(TMP[0], "one", "cloud-sheets")
+    os.makedirs(os.path.join(sheets, "datasheets", "ldo"))
+    shutil.copy(os.path.join(real, "render.py"), sheets)
+    for p in glob.glob(os.path.join(real, "datasheets", "ldo", "LM317DCYR.*")):
+        if not p.endswith("LM317DCYR.html"):
+            shutil.copy(p, os.path.join(sheets, "datasheets", "ldo"))
+    with open(os.path.join(real, "index.csv"), encoding="utf-8") as f, \
+            open(os.path.join(sheets, "index.csv"), "w", encoding="utf-8") as g:
+        rows = f.read().splitlines()
+        g.write("\n".join([rows[0]] + [r for r in rows if "datasheets/ldo/LM317DCYR.json" in r]) + "\n")
+    env = dict(os.environ, CLOUD_SHEETS=sheets)
+    cli = os.path.join(REPO, "bin", "cloud-parts")
+    show = lambda: subprocess.run([sys.executable, cli, "show", "LM317DCYR"], env=env, capture_output=True, text=True).stdout
+    assert "  sheet as page  not written yet: cloud-parts sheet LM317DCYR" in show()
+    subprocess.run([sys.executable, os.path.join(sheets, "render.py"), "all"], check=True, capture_output=True)
+    with open(os.path.join(sheets, "index.html"), encoding="utf-8") as f:
+        assert 'href="datasheets/ldo/LM317DCYR.html"' in f.read()
+    page = [l for l in show().splitlines() if l.startswith("  sheet as page")][0].split(None, 3)[3]
+    assert page == os.path.join(os.path.realpath(sheets), "datasheets", "ldo", "LM317DCYR.html") or page.endswith(
+        os.path.join("cloud-sheets", "datasheets", "ldo", "LM317DCYR.html"))
+    with open(page, encoding="utf-8") as f:
+        text = f.read()
+    assert '<section id="absolute-maximum-ratings">' in text and '<section id="circuit-adjustable">' in text
+    ids = re.findall(r'\sid="([^"]+)"', text)
+    assert len(ids) == len(set(ids))
+    assert not re.search(r'(?:src|href)="(?!#)', text) and "<script" not in text and "@import" not in text
 
 
 def test_found_by_the_datasheet_name_when_the_index_lacks_the_part_number():

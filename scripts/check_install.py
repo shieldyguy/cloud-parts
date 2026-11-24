@@ -163,9 +163,15 @@ def main(argv):
         problems.append("%d datasheet(s) differ from the sha256 selection.csv records, e.g. %s"
                         % (len(changed), changed[0]))
 
-    have = sum(1 for r in sel if cloud_parts.find_sheet(r["mpn"], r["datasheet_path"]))
+    found = [s for s in (cloud_parts.find_sheet(r["mpn"], r["datasheet_path"]) for r in sel) if s]
+    have = len(found)
     if have:
         line("reference sheets", have, len(sel), ok="ok", note="parts with a sheet in cloud-sheets (optional)")
+        pages = {s["path"]: s["page"] for s in found}
+        made = sum(1 for p in pages.values() if p)
+        line("sheet pages", made, len(pages), ok="ok" if made == len(pages) else "partial",
+             note="each sheet as an HTML page; index.html in cloud-sheets lists them" if made == len(pages)
+             else "run ./install.sh to write them")
     else:
         line("reference sheets", "not installed (optional): place cloud-sheets beside this folder", ok="ok",
              note="or set CLOUD_SHEETS")

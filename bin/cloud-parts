@@ -31,11 +31,13 @@
                                is not stated), its snapshot price (or that it has none), and the paths
                                of its datasheet, KiCad symbol, footprint and 3D model in this repository.
                                Where the separate cloud-sheets repository is beside this one (or at
-                               $CLOUD_SHEETS), also the part's reference sheet: its data file (JSON, the
-                               sheet itself)
-    cloud-parts sheet MPN...   the part's reference sheet as a page to read: one HTML file with its tables,
-                               graphs and drawings, written now from the data file (needs cloud-sheets);
-                               prints the page's path
+                               $CLOUD_SHEETS), also the part's reference sheet, which is its datasheet here:
+                               the data file (JSON) and the same as a page to read or show (HTML;
+                               install.sh writes every sheet's page, and cloud-sheets/index.html lists them)
+    cloud-parts sheet MPN...   writes the part's page again from the data file and prints its path. The page
+                               is one HTML file that loads nothing else, with the sheet's tables, graphs
+                               and drawings. Each part of it has an id, to link to or to lift out:
+                               PAGE.html#absolute-maximum-ratings, #circuit-<circuit>, #curve-<title>
 
 Both take --json; tests/test_find_cli.py lists every key. Paths printed are relative to
 the repository root ($CLOUD_PARTS). The search is lib/parts_params.py over table/, through
@@ -388,7 +390,7 @@ def cmd_show(mpns, as_json=False):
                 print("  sheet          %s  (%s tables, %s curves, %d circuits)" % (
                     sh["path"], sh["tables"] if sh["tables"] is not None else "?",
                     sh["curves"] if sh["curves"] is not None else "?", len(sh["circuits"])))
-                print("  sheet as page  cloud-parts sheet %s" % rec["mpn"])
+                print("  sheet as page  %s" % (sh["page"] or "not written yet: cloud-parts sheet %s" % rec["mpn"]))
             for f in rec["fields"]:
                 if f["value"] is not None:
                     print("    %-18s %-24s p.%s  %s" % (f["field"], f["shown"], f["page"], f["condition"] or ""))

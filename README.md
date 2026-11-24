@@ -6,7 +6,9 @@ search tool.
 
 ## Setup
 
-    ./install.sh        # offline, Python 3.8+ only; writes env.sh, registers the KiCad libraries, checks itself
+With `cloud-sheets` (the parts' datasheets) cloned beside this folder:
+
+    ./install.sh        # offline, Python 3.8+ only; writes env.sh, registers the KiCad libraries, writes the sheets' pages, checks itself
     . ./env.sh          # sets CLOUD_PARTS, puts bin/ on PATH
 
 `./install.sh --help` lists its options.
@@ -22,6 +24,11 @@ search tool.
 `cloud-parts find --help [KIND]` is the search syntax and a kind's columns.
 `find` and `show` take `--json`.
 
+`show` gives a part's datasheet twice: the sheet (JSON) and the same as a page
+(HTML, one file that loads nothing else). `cloud-sheets/index.html` lists every
+page. Each part of a page has an id, to link to or lift out:
+`LM317DCYR.html#absolute-maximum-ratings`, `#circuit-adjustable`.
+
 ## Layout
 
 - `table/<kind>.jsonl` one part per line; each field is `{value, page, condition}` or `{value: null, null_reason}`
@@ -32,12 +39,12 @@ search tool.
 - `bin/cloud-parts`, `lib/` the search tool and its Python module
 - `scripts/`, `tests/` the install check and the tests (pytest)
 
-## Sibling repositories (optional)
+## Sibling repositories
 
 Placed beside this folder, or named by the variable:
 
-- `cloud-datasheets` (`$CLOUD_DATASHEETS`) the datasheet PDFs the page numbers refer to
-- `cloud-sheets` (`$CLOUD_SHEETS`) each datasheet as a data file with drawn circuits
+- `cloud-sheets` (`$CLOUD_SHEETS`) each datasheet as a data file and a page, with drawn circuits
+- `cloud-datasheets` (`$CLOUD_DATASHEETS`, optional) the datasheet PDFs the page numbers refer to
 
 ## Licence
 
