@@ -1,25 +1,33 @@
 #!/bin/sh
 # cloud-parts install: offline, nothing downloaded, nothing installed with pip.
-#   ./install.sh                  write env.sh, register the KiCad libraries if KiCad is here, write the
-#                                 sheets' pages, self-check
+#   ./install.sh                  write env.sh, add the libraries to each KiCad (10 or later) found here,
+#                                 write the sheets' pages, self-check
+#   ./install.sh --kicad DIR      as the first, but add the libraries to DIR only: a KiCad settings
+#                                 folder somewhere else, or a project folder
+#   ./install.sh --no-kicad       as the first, but leave every KiCad alone
 #   ./install.sh --check          the self-check table only
-#   ./install.sh --no-kicad       as the first, but leave any KiCad configuration alone
+# KiCad is not needed: the search, the sheets and the library files work without it.
 # The reference sheets are a separate repository, cloud-sheets: place it beside this folder (or set
 # CLOUD_SHEETS) before installing. install.sh writes each sheet as an HTML page beside its data file,
 # and cloud-sheets/index.html, which lists them (a few seconds; run again after the sheets change).
 # Then: . ./env.sh   (puts `cloud-parts` on PATH and sets CLOUD_PARTS). Safe to run again.
 set -u
+HERE=$(pwd)
 cd "$(dirname "$0")" || exit 1
 ROOT=$(pwd -P)
 
-CHECK_ONLY=0; KICAD=1
-for a in "$@"; do
-  case "$a" in
+CHECK_ONLY=0; KICAD=1; KDIR=""
+while [ $# -gt 0 ]; do
+  case "$1" in
     --check) CHECK_ONLY=1 ;;
     --no-kicad) KICAD=0 ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
-    *) echo "install.sh: unknown option $a (--check, --no-kicad)"; exit 2 ;;
+    --kicad) [ $# -gt 1 ] || { echo "install.sh: --kicad needs a folder"; exit 2; }
+             KDIR=$(cd "$HERE" && cd "$2" 2>/dev/null && pwd -P) || { echo "install.sh: --kicad: $2 is not a folder"; exit 2; }
+             shift ;;
+    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+    *) echo "install.sh: unknown option $1 (--kicad DIR, --no-kicad, --check)"; exit 2 ;;
   esac
+  shift
 done
 
 PY=$(command -v python3 || true)
@@ -58,7 +66,11 @@ echo "cloud-parts at $ROOT"
 echo "  wrote env.sh (CLOUD_PARTS, and bin/ on PATH)"
 
 if [ "$KICAD" = 1 ]; then
-  "$PY" "$ROOT/scripts/kicad_config.py" "$ROOT" || echo "  KiCad: configuration not changed (see above)"
+  if [ -n "$KDIR" ]; then
+    "$PY" "$ROOT/scripts/kicad_config.py" "$ROOT" "$KDIR"
+  else
+    "$PY" "$ROOT/scripts/kicad_config.py" "$ROOT"
+  fi || echo "  KiCad: nothing changed (see above)"
 fi
 
 if [ -n "$SH" ]; then
