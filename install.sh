@@ -4,12 +4,11 @@
 #                                 sheets' pages, self-check
 #   ./install.sh --check          the self-check table only
 #   ./install.sh --no-kicad       as the first, but leave any KiCad configuration alone
-#   ./install.sh --require-datasheets   fail when the datasheets (cloud-datasheets) are not found
+#   ./install.sh --require-datasheets   fail when the datasheet PDFs (a cloud-datasheets folder beside
+#                                 this one, or at CLOUD_DATASHEETS) are not found
 # The reference sheets are a separate repository, cloud-sheets: place it beside this folder (or set
 # CLOUD_SHEETS) before installing. install.sh writes each sheet as an HTML page beside its data file,
 # and cloud-sheets/index.html, which lists them (a few seconds; run again after the sheets change).
-# The datasheet PDFs are a separate repository, cloud-datasheets: place it beside this folder
-# (or set CLOUD_DATASHEETS) and run install.sh again.
 # Then: . ./env.sh   (puts `cloud-parts` on PATH and sets CLOUD_PARTS). Safe to run again.
 set -u
 cd "$(dirname "$0")" || exit 1
@@ -21,7 +20,7 @@ for a in "$@"; do
     --check) CHECK_ONLY=1 ;;
     --no-kicad) KICAD=0 ;;
     --require-datasheets) REQ="--require-datasheets" ;;
-    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
     *) echo "install.sh: unknown option $a (--check, --no-kicad, --require-datasheets)"; exit 2 ;;
   esac
 done
@@ -71,7 +70,7 @@ echo "cloud-parts at $ROOT"
 if [ -n "$DS" ]; then
   echo "  wrote env.sh (CLOUD_PARTS, bin/ on PATH, CLOUD_DATASHEETS=$DS)"
 else
-  echo "  wrote env.sh (CLOUD_PARTS, and bin/ on PATH); datasheets: place the cloud-datasheets repository beside this folder (optional)"
+  echo "  wrote env.sh (CLOUD_PARTS, and bin/ on PATH)"
 fi
 
 if [ "$KICAD" = 1 ]; then

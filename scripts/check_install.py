@@ -147,9 +147,8 @@ def main(argv):
     n, good, missing, changed = datasheet_status(sel, cloud_parts.find_datasheet)
     how = "sha256 checked"
     if len(missing) == n:
-        line("datasheets present", "not installed (optional): place cloud-datasheets beside this folder",
-             ok="MISSING" if require else "ok", note="then run install.sh again")
-        if require:
+        if require:             # the PDFs are optional: with none installed and none required, no row
+            line("datasheets present", 0, n, ok="MISSING")
             problems.append("no datasheets found (--require-datasheets): place cloud-datasheets beside this "
                             "folder or set CLOUD_DATASHEETS")
     elif missing:

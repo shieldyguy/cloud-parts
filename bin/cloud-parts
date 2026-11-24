@@ -11,8 +11,8 @@
                                is the whole syntax and every kind; `--help KIND` one kind's columns;
                                `--table KIND` every part of a kind with every value
     --why                      each value shown with its datasheet page and the condition it is specified at;
-                               a value not stated, with the reason. The pages are the datasheets' own, in
-                               the separate cloud-datasheets repository
+                               a value not stated, with the reason. The pages are the maker's datasheet's,
+                               the ones the part's sheet gives as p. N
     --limit N                  print at most N parts (default 50; `--limit 0` for all). The count printed
                                at the end is always the whole number that fit, limit or no limit
     jlc, lcsc                  two more columns every kind has: whether JLCPCB's assembly service offers
@@ -29,7 +29,7 @@
     cloud-parts show MPN [--json]    one part (its part number as printed by find, any case;
                                / and space may be written _): kind, manufacturer, every field with its page and condition (or why it
                                is not stated), its snapshot price (or that it has none), and the paths
-                               of its datasheet, KiCad symbol, footprint and 3D model in this repository.
+                               of its KiCad symbol, footprint and 3D model in this repository.
                                Where the separate cloud-sheets repository is beside this one (or at
                                $CLOUD_SHEETS), also the part's reference sheet, which is its datasheet here:
                                the data file (JSON) and the same as a page to read or show (HTML;
@@ -238,7 +238,7 @@ def cmd_find(words, as_json=False, sort=None, desc=False, table=None, show_why=F
                 print("      description: %s" % (rw["description"] or "-"))
                 for line in rw["spec_lines"][:4]:
                     print("      table %s" % line)
-            if rw["datasheet"]:
+            if rw["datasheet"] and E.find_datasheet(rw["datasheet"]):       # only where the PDFs are installed
                 print("      datasheet: %s" % rw["datasheet"])
     for k, why in r["skipped"].items():
         print("  (%s not searched: %s)" % (k, why.split(". Its columns")[0]))
@@ -377,11 +377,10 @@ def cmd_show(mpns, as_json=False):
             for k, label in (("datasheet", "datasheet"), ("symbol_file", "symbol file"),
                              ("footprint_file", "footprint file"), ("model_file", "3D model")):
                 fi = rec["files"][k]
+                if k == "datasheet" and not fi["present"]:      # the PDFs are not installed: the sheet below is the datasheet
+                    continue
                 print("  %-14s %s%s" % (label, fi["path"] or "-",
                                          "" if fi["present"] or not fi["path"] else "  (not present)"))
-                if k == "datasheet" and fi["path"] and not fi["present"]:
-                    print("  %-14s the PDF is in the separate %s repository: place it beside this one, or set "
-                          "CLOUD_DATASHEETS" % ("", E.DATASHEETS_REPO))
             print("  revision       %s; %s pages; sha256 %s" % (rec["datasheet_revision"] or "-",
                                                              rec["datasheet_pages"] or "?",
                                                              (rec["datasheet_sha256"] or "-")[:16]))

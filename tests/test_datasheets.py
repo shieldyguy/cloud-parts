@@ -63,6 +63,27 @@ def test_lookup_order():
     assert roots == ["/x", os.path.join(tmp, "cloud-datasheets"), repo]
 
 
+def test_show_names_the_pdf_only_where_it_is_installed():
+    """With no PDFs, show and find print nothing about them; with one, show prints its path."""
+    import subprocess
+    cli = os.path.join(REPO, "bin", "cloud-parts")
+    run = lambda env, *a: subprocess.run([sys.executable, cli] + list(a), env=env, capture_output=True, text=True).stdout
+    root = os.path.join(str(TMP[0]), "pdfs")
+    rel = "datasheets/regulator/LM317DCYR.pdf"
+    os.makedirs(os.path.join(root, os.path.dirname(rel)))
+    with open(os.path.join(root, rel), "wb") as f:
+        f.write(PDF)
+    out = run(dict(os.environ, CLOUD_DATASHEETS=root), "show", "LM317DCYR")
+    assert "  datasheet      %s" % os.path.join(root, rel) in out
+    if os.path.isdir(os.path.join(os.path.dirname(REPO), cloud_parts.DATASHEETS_REPO)):
+        return                                   # the real PDFs are beside this one: the sibling still answers
+    env = {k: v for k, v in os.environ.items() if k != "CLOUD_DATASHEETS"}
+    for out in (run(env, "show", "LM317DCYR"), run(env, "find", "LM317DCYR")):
+        assert "LM317DCYR" in out
+        assert not [l for l in out.splitlines() if l.lstrip().startswith(("datasheet ", "datasheet:"))]
+        assert "cloud-datasheets" not in out and "not present" not in out and ".pdf" not in out
+
+
 TMP = [None]
 
 
