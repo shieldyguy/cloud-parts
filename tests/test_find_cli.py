@@ -78,7 +78,6 @@ def test_show_gives_every_field_and_every_file():
     vin = next(f for f in p["fields"] if f["field"] == "vin")
     assert vin["value"] and vin["page"]
     assert all(f["value"] is not None or f["null_reason"] for f in p["fields"])
-    assert p["files"]["datasheet"]["path"].endswith("datasheets/regulator/LM317DCYR.pdf")
     assert p["files"]["symbol_file"]["path"] == "kicad/symbols/Regulator_Linear.kicad_sym"
     assert p["files"]["footprint_file"]["path"].endswith("Package_TO_SOT_SMD.pretty/SOT-223-3_TabPin2.kicad_mod")
 
@@ -90,7 +89,7 @@ def test_show_is_case_blind_and_names_a_miss():
 
 
 # The --json shapes other toolchains parse: changing a key is a breaking change.
-PART = ["mpn", "kind", "manufacturer", "package", "footprint", "symbol", "datasheet", "description",
+PART = ["mpn", "kind", "manufacturer", "package", "footprint", "symbol", "description",
         "jlc", "lcsc", "price", "params"]
 FIT = ["fits", "sort_key", "values", "not_stated"]
 
@@ -116,12 +115,12 @@ def test_json_shapes_are_pinned():
     p = shown["parts"][0]
     assert list(p) == ["mpn", "manufacturer", "kind", "series", "unit", "kicad_symbol", "footprint",
                        "jlc", "lcsc", "price", "files",
-                       "datasheet_sha256", "datasheet_revision", "datasheet_pages", "datasheet_present",
+                       "datasheet_revision", "datasheet_pages",
                        "sheet", "fields"]
     assert p["sheet"] is None or list(p["sheet"]) == ["path", "page", "render", "tables", "curves", "circuits"]
-    assert list(p["files"]) == ["datasheet", "symbol_file", "footprint_file", "model_file"]
+    assert list(p["files"]) == ["symbol_file", "footprint_file", "model_file"]
     assert all(list(v) == ["path", "present"] for v in p["files"].values())
-    assert isinstance(p["datasheet_pages"], int) and isinstance(p["datasheet_present"], bool)
+    assert isinstance(p["datasheet_pages"], int)
     assert all(list(f) == ["field", "value", "shown", "page", "condition", "null_reason"] for f in p["fields"])
 
 

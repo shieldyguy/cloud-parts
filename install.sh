@@ -12,12 +12,11 @@ set -u
 cd "$(dirname "$0")" || exit 1
 ROOT=$(pwd -P)
 
-CHECK_ONLY=0; KICAD=1; REQ=""
+CHECK_ONLY=0; KICAD=1
 for a in "$@"; do
   case "$a" in
     --check) CHECK_ONLY=1 ;;
     --no-kicad) KICAD=0 ;;
-    --require-datasheets) REQ="--require-datasheets" ;;
     -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
     *) echo "install.sh: unknown option $a (--check, --no-kicad)"; exit 2 ;;
   esac
@@ -34,16 +33,10 @@ if ! "$PY" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 8) else 1)'; th
 fi
 
 if [ "$CHECK_ONLY" = 1 ]; then
-  exec "$PY" "$ROOT/scripts/check_install.py" $REQ
+  exec "$PY" "$ROOT/scripts/check_install.py"
 fi
 
 chmod +x "$ROOT/bin/cloud-parts" 2>/dev/null
-DS=""
-if [ -n "${CLOUD_DATASHEETS:-}" ] && [ -d "$CLOUD_DATASHEETS/datasheets" ]; then
-  DS=$(cd "$CLOUD_DATASHEETS" && pwd -P)
-elif [ -d "$ROOT/../cloud-datasheets/datasheets" ]; then
-  DS=$(cd "$ROOT/../cloud-datasheets" && pwd -P)
-fi
 SH=""
 if [ -n "${CLOUD_SHEETS:-}" ] && [ -f "$CLOUD_SHEETS/render.py" ]; then
   SH=$(cd "$CLOUD_SHEETS" && pwd -P)
@@ -58,18 +51,11 @@ case ":\$PATH:" in
   *) export PATH="$ROOT/bin:\$PATH" ;;
 esac
 EOF
-if [ -n "$DS" ]; then
-  echo "export CLOUD_DATASHEETS=\"$DS\"" >> "$ROOT/env.sh"
-fi
 if [ -n "$SH" ]; then
   echo "export CLOUD_SHEETS=\"$SH\"" >> "$ROOT/env.sh"
 fi
 echo "cloud-parts at $ROOT"
-if [ -n "$DS" ]; then
-  echo "  wrote env.sh (CLOUD_PARTS, bin/ on PATH, CLOUD_DATASHEETS=$DS)"
-else
-  echo "  wrote env.sh (CLOUD_PARTS, and bin/ on PATH)"
-fi
+echo "  wrote env.sh (CLOUD_PARTS, and bin/ on PATH)"
 
 if [ "$KICAD" = 1 ]; then
   "$PY" "$ROOT/scripts/kicad_config.py" "$ROOT" || echo "  KiCad: configuration not changed (see above)"
@@ -86,7 +72,7 @@ else
 fi
 
 echo
-CLOUD_DATASHEETS="$DS" CLOUD_SHEETS="$SH" "$PY" "$ROOT/scripts/check_install.py" $REQ
+CLOUD_SHEETS="$SH" "$PY" "$ROOT/scripts/check_install.py"
 status=$?
 echo
 if [ $status -eq 0 ]; then

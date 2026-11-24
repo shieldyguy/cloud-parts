@@ -1,6 +1,4 @@
 __pycache__/
 .pytest_cache/
-# datasheet PDFs are not kept here; a copy dropped in is not committed
-datasheets/
 # written by install.sh
 env.sh

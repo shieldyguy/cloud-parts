@@ -2,8 +2,7 @@
 
     python3 scripts/check_install.py
 
-Prints one table: parts, table rows, the datasheet PDFs where a set is installed (each one's sha256
-checked against selection.csv), the reference sheets and their pages,
+Prints one table: parts, table rows, the reference sheets and their pages,
 the price snapshot (prices.csv: a row naming a part not in the library is an error),
 symbols resolving, footprints resolving, the four symbol/footprint checks of lib/kicad_pins.py,
 models present, the KiCad library tables, and
@@ -11,7 +10,6 @@ whether `cloud-parts find ldo` runs. Exit 1 with the reasons when anything is mi
 model KiCad's 3D library never had (model_present = no in selection.csv) is counted, not failed.
 Standard library only."""
 import csv
-import hashlib
 import json
 import os
 import re
@@ -21,35 +19,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-def sha256_of(path):
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for b in iter(lambda: f.read(1 << 20), b""):
-            h.update(b)
-    return h.hexdigest()
-
-
-def datasheet_status(rows, find):
-    """(distinct datasheets, [present and right], [not found], [found but changed]) for selection rows;
-    find(datasheet_path) -> absolute path or None. A datasheet is right when its sha256 is the one
-    selection.csv records for it."""
-    sheets = {}
-    for r in rows:
-        sheets.setdefault(r["datasheet_path"], r)
-    good, missing, changed = [], [], []
-    for p, r in sheets.items():
-        full = find(p)
-        if not full:
-            missing.append(p)
-        elif sha256_of(full) == r["sha256"]:
-            good.append(p)
-        else:
-            changed.append(p)
-    return len(sheets), good, missing, changed
-
-
 def main(argv):
-    require = "--require-datasheets" in argv
     rows_out, problems = [], []
 
     def line(what, got, of=None, ok=True, note=""):
@@ -142,23 +112,6 @@ def main(argv):
         if bad:
             problems.append("prices.csv: %d row(s) with a kind, source, basis, quantity, price, currency or "
                             "date that cannot be: %s" % (len(bad), ", ".join(bad[:5])))
-
-    n, good, missing, changed = datasheet_status(sel, cloud_parts.find_datasheet)
-    how = "sha256 checked"
-    if len(missing) == n:
-        if require:             # the PDFs are optional: with none installed and none required, no row
-            line("datasheets present", 0, n, ok="MISSING")
-            problems.append("no datasheets found (--require-datasheets)")
-    elif missing:
-        line("datasheets present", len(good), n, ok="MISSING" if require else "partial",
-             note="%s; %d not present (optional)" % (how, len(missing)))
-        if require:
-            problems.append("%d datasheet(s) not found, e.g. %s" % (len(missing), missing[0]))
-    else:
-        line("datasheets present", len(good), n, not changed, how)
-    if changed:
-        problems.append("%d datasheet(s) differ from the sha256 selection.csv records, e.g. %s"
-                        % (len(changed), changed[0]))
 
     found = [s for s in (cloud_parts.find_sheet(r["mpn"], r["datasheet_path"]) for r in sel) if s]
     have = len(found)

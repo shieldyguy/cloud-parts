@@ -65,41 +65,9 @@ PRICE_SOURCES = {"jlcpcb": "JLCPCB", "mouser": "Mouser"}
 PRICE_BASES = ("at_100", "min_order_above_100", "one_piece_last_seen", "family")
 
 
-# -- where the datasheets are -------------------------------------------------
-# The PDFs are not kept here. Where a set is installed, a datasheet_path from
-# selection.csv (datasheets/<kind>/<file>.pdf) is looked for under the folders
-# of datasheet_roots(), in order.
-
-DATASHEETS_REPO = "cloud-datasheets"
-
-
-def datasheet_roots(env=None, repo=None):
-    """The folders a datasheet_path is looked for under, in order."""
-    env = os.environ if env is None else env
-    repo = repo or REPO
-    roots = []
-    if env.get("CLOUD_DATASHEETS"):
-        roots.append(env["CLOUD_DATASHEETS"])
-    roots.append(os.path.join(os.path.dirname(os.path.abspath(repo)), DATASHEETS_REPO))
-    roots.append(repo)
-    return roots
-
-
-def find_datasheet(rel, env=None, repo=None):
-    """The absolute path of datasheet_path `rel` where it is, or None."""
-    if not rel:
-        return None
-    for root in datasheet_roots(env, repo):
-        p = os.path.join(root, rel)
-        if os.path.isfile(p):
-            return os.path.abspath(p)
-    return None
-
-
 # -- the reference sheets ------------------------------------------------------
 # A part's reference sheet (its datasheet's facts as a data file, with drawn
-# circuits) is in the separate cloud-sheets repository, optional here like the
-# PDFs: under $CLOUD_SHEETS, or a sibling folder ../cloud-sheets. Its index.csv
+# circuits) is in the separate cloud-sheets repository, optional here: under $CLOUD_SHEETS, or a sibling folder ../cloud-sheets. Its index.csv
 # has one row per sheet: the part numbers that use it, the sheet's path and
 # its circuits.
 SHEETS_REPO = "cloud-sheets"

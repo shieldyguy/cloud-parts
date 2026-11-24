@@ -85,14 +85,14 @@ def _not_stated(d, kind, unknown):
 
 
 # The --json shapes (tests/test_find_cli.py pins the keys).
-PART_KEYS = ["mpn", "kind", "manufacturer", "package", "footprint", "symbol", "datasheet", "description",
+PART_KEYS = ["mpn", "kind", "manufacturer", "package", "footprint", "symbol", "description",
              "jlc", "lcsc", "price", "params"]
 FIT_KEYS = ["fits", "sort_key", "values", "not_stated"]
 
 
 def _json_part(rw):
     out = {"mpn": rw["mpn"], "kind": rw["kind"], "manufacturer": rw["manufacturer"], "package": rw["package"],
-           "footprint": rw["footprint"], "symbol": rw["symbol"], "datasheet": rw["datasheet"],
+           "footprint": rw["footprint"], "symbol": rw["symbol"],
            "description": rw["description"], "jlc": rw["jlc"], "lcsc": rw["lcsc"],
            "price": rw["price"], "params": rw["params"]}
     if "fits" in rw:
@@ -238,8 +238,6 @@ def cmd_find(words, as_json=False, sort=None, desc=False, table=None, show_why=F
                 print("      description: %s" % (rw["description"] or "-"))
                 for line in rw["spec_lines"][:4]:
                     print("      table %s" % line)
-            if rw["datasheet"] and E.find_datasheet(rw["datasheet"]):       # only where the PDFs are installed
-                print("      datasheet: %s" % rw["datasheet"])
     for k, why in r["skipped"].items():
         print("  (%s not searched: %s)" % (k, why.split(". Its columns")[0]))
     if yes:
@@ -274,11 +272,10 @@ def _here(path):
 
 
 def part_files(sel):
-    """The repository files of one selection row: datasheet, symbol library, footprint, model."""
+    """The repository files of one selection row: symbol library, footprint, model."""
     lib, _, name = (sel.get("kicad_symbol") or "").partition(":")
     flib, _, fname = (sel.get("footprint") or "").partition(":")
     return {
-        "datasheet": sel.get("datasheet_path") or None,
         "symbol_file": "kicad/symbols/%s.kicad_sym" % lib if lib else None,
         "footprint_file": "kicad/footprints/%s.pretty/%s.kicad_mod" % (flib, fname) if flib else None,
         "model_file": sel.get("model_path") or None,
@@ -345,19 +342,15 @@ def cmd_show(mpns, as_json=False):
                            "null_reason": w.get("null_reason") if v is None else None})
         files = part_files(sel)
         filed = {k: {"path": p, "present": _here(p)[1]} for k, p in files.items()}
-        ds = E.find_datasheet(files["datasheet"])
-        filed["datasheet"] = {"path": ds or files["datasheet"], "present": bool(ds)}
         rec = {"mpn": sel["mpn"], "manufacturer": sel["manufacturer"], "kind": kind,
                "series": sel.get("series_id") or None, "unit": sel.get("unit") or None,
                "kicad_symbol": sel.get("kicad_symbol"), "footprint": sel.get("footprint"),
                "jlc": sel.get("jlc") or None, "lcsc": sel.get("lcsc") or None,
                "price": E.price_of(sel["mpn"]),
                "files": filed,
-               "datasheet_sha256": sel.get("sha256"),
                "datasheet_revision": sel.get("revision_or_date"),
                "datasheet_pages": int(sel["pages"]) if (sel.get("pages") or "").isdigit() else None,
-               "datasheet_present": bool(ds),
-               "sheet": E.find_sheet(sel["mpn"], files["datasheet"]),
+               "sheet": E.find_sheet(sel["mpn"], sel.get("datasheet_path")),
                "fields": fields}
         out.append(rec)
     if as_json:
@@ -374,16 +367,12 @@ def cmd_show(mpns, as_json=False):
                 if rec["jlc"] else "not offered by JLCPCB assembly in the snapshot"))
             print("  price          %s" % (E.price_text(rec["price"]) or (
                 "none: %s" % E.price_reason({"lcsc": rec["lcsc"]}))))
-            for k, label in (("datasheet", "datasheet"), ("symbol_file", "symbol file"),
-                             ("footprint_file", "footprint file"), ("model_file", "3D model")):
+            for k, label in (("symbol_file", "symbol file"), ("footprint_file", "footprint file"),
+                             ("model_file", "3D model")):
                 fi = rec["files"][k]
-                if k == "datasheet" and not fi["present"]:      # the PDFs are not installed: the sheet below is the datasheet
-                    continue
                 print("  %-14s %s%s" % (label, fi["path"] or "-",
                                          "" if fi["present"] or not fi["path"] else "  (not present)"))
-            print("  revision       %s; %s pages; sha256 %s" % (rec["datasheet_revision"] or "-",
-                                                             rec["datasheet_pages"] or "?",
-                                                             (rec["datasheet_sha256"] or "-")[:16]))
+            print("  revision       %s; %s pages" % (rec["datasheet_revision"] or "-", rec["datasheet_pages"] or "?"))
             sh = rec["sheet"]
             if sh:                                  # the cloud-sheets repository is beside this one, or at $CLOUD_SHEETS
                 print("  sheet          %s  (%s tables, %s curves, %d circuits)" % (
