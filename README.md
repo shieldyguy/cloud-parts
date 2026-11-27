@@ -1,6 +1,6 @@
 # cloud-parts
 
-12,077 electronic parts for offline use: each part's datasheet values with
+12,081 electronic parts for offline use: each part's datasheet values with
 their page numbers, its KiCad symbol, footprint and 3D model, a price, and a
 search tool.
 
@@ -56,7 +56,7 @@ KiCad 10 file format (KiCad 9 cannot read it).
 
 - `table/<kind>.jsonl` one part per line; each field is `{value, page, condition}` or `{value: null, null_reason}`
 - `schema/parts_params.json` the kinds, their fields and units
-- `selection.csv` one row per part: kind, KiCad symbol and footprint, datasheet path, sha256, pages, revision, and JLCPCB's assembly class and LCSC number as of 15 November 2026
+- `selection.csv` one row per part: kind, KiCad symbol and footprint, datasheet path, sha256, pages, revision, and JLCPCB's assembly class and LCSC number as of 15 November 2026 (a part added later: the day of its price)
 - `prices.csv` USD per piece when buying 100, with the day each was read
 - `kicad/` symbols, footprints, 3D models and library tables
 - `bin/cloud-parts`, `lib/` the search tool and its Python module
