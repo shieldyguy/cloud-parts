@@ -2043,8 +2043,11 @@
      "unit": "V"
     },
     "ron": {
-     "type": "num",
-     "unit": "Ω"
+     "type": "cond",
+     "unit": "Ω",
+     "at": "supply",
+     "at_unit": "V",
+     "desc": "on-resistance at a supply voltage, typical (the maximum when that is all that is given); one entry per supply the datasheet gives. A dual supply is its whole span: ±5 V is 10"
     },
     "bandwidth": {
      "type": "num",
