@@ -824,6 +824,11 @@
     "resistors": {
      "type": "bool",
      "desc": "digital (pre-biased) transistor"
+    },
+    "vbe_match": {
+     "type": "num",
+     "unit": "V",
+     "desc": "matched pair: the largest base-emitter voltage difference between its two transistors (the guaranteed maximum; typical when that is all that is given)"
     }
    },
    "aliases": {
@@ -832,6 +837,7 @@
     "current": "ic",
     "i": "ic",
     "gain": "hfe",
+    "match": "vbe_match",
     "type": "polarity"
    }
   },
